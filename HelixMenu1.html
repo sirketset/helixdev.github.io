@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HelixMenu – Cardápios Digitais Imersivos para Seu Restaurante</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#ef4444',
+            secondary: '#f59f00',
+            accent: '#facc15'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: white;
+    }
+    .feature-list li::before {
+      content: "✓";
+      color: #10b981;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body class="overflow-x-hidden">
+  <!-- Hero Section -->
+  <section class="py-16 px-4 text-center">
+    <div class="max-w-4xl mx-auto">
+      <div class="inline-flex items-center gap-2 mb-6">
+        <div class="fire">🔥</div>
+        <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-red-500 to-yellow-400 bg-clip-text text-transparent">
+          HelixMenu
+        </h1>
+      </div>
+      <p class="text-xl text-gray-300 mb-8">
+        Transforme seu restaurante com um <strong>cardápio digital imersivo</strong>, multilíngue e integrado ao WhatsApp — tudo em uma espiral interativa que encanta seus clientes.
+      </p>
+      <a href="#plans" class="bg-gradient-to-r from-red-500 to-yellow-400 text-white font-bold py-3 px-8 rounded-full text-lg shadow-lg hover:opacity-90 transition">
+        Comece Agora
+      </a>
+    </div>
+  </section>
+
+  <!-- Value Proposition -->
+  <section class="py-12 px-4 bg-gray-900/30">
+    <div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 text-center">
+      <div class="p-6">
+        <div class="text-yellow-400 text-3xl mb-4"><i class="fas fa-qrcode"></i></div>
+        <h3 class="text-xl font-semibold mb-2">Cardápio Digital + QR Code</h3>
+        <p class="text-gray-400">Seus clientes acessam o cardápio escaneando um QR Code — sem apps, sem downloads.</p>
+      </div>
+      <div class="p-6">
+        <div class="text-red-400 text-3xl mb-4"><i class="fas fa-language"></i></div>
+        <h3 class="text-xl font-semibold mb-2">Até 7 Idiomas</h3>
+        <p class="text-gray-400">Atenda turistas e clientes internacionais com tradução automática e precisa.</p>
+      </div>
+      <div class="p-6">
+        <div class="text-blue-400 text-3xl mb-4"><i class="fas fa-bolt"></i></div>
+        <h3 class="text-xl font-semibold mb-2">Pedidos Direto no WhatsApp</h3>
+        <p class="text-gray-400">Seus pedidos chegam organizados e prontos para serem preparados — sem erros!</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Plans Section - Estilo Game Pass Atualizado -->
+  <section id="plans" class="py-16 px-4">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-3xl font-bold text-center mb-2">Escolha Seu Plano</h2>
+      <p class="text-yellow-300 font-bold text-center mb-2">PIX: +8% OFF em todos os planos!</p>
+      <p class="text-gray-400 text-center mb-10">Assine por 1, 3 ou 12 meses. Quanto mais tempo, mais você economiza!</p>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        <!-- Basic Plan -->
+        <div class="bg-gray-800/70 border border-red-500/30 rounded-2xl p-6 flex flex-col">
+          <h3 class="text-2xl font-bold text-red-400 mb-4">Básico</h3>
+          <ul class="feature-list space-y-2 mb-6 text-left text-sm">
+            <li>Cardápio digital em espiral</li>
+            <li>QR Code personalizado</li>
+            <li>7 idiomas (PT, EN, ES, DE, FR, JA, ZH)</li>
+            <li>Pedidos via WhatsApp</li>
+            <li>Suporte básico</li>
+          </ul>
+
+          <div class="space-y-4 mt-auto">
+            <!-- 1 mês -->
+            <div class="border border-gray-700 rounded-lg p-4 bg-gray-900/50">
+              <div class="flex justify-between items-start">
+                <div>
+                  <span class="text-lg font-bold">R$149</span>
+                  <span class="text-gray-400 text-sm">/mês</span>
+                </div>
+                <span class="text-xs bg-gray-700 px-2 py-1 rounded">1 mês</span>
+              </div>
+              <a href="https://wa.me/5511999999999?text=Olá,%20quero%20o%20plano%20Básico%20(1%20mês)%20do%20HelixMenu!" target="_blank" class="mt-3 block w-full bg-red-600 hover:bg-red-700 text-white text-center py-2 rounded-lg text-sm font-medium">
+                Contratar
+              </a>
+            </div>
+
+            <!-- 3 meses -->
+            <div class="border border-green-500/30 rounded-lg p-4 bg-gray-900/50 relative">
+              <div class="absolute top-0 right-0 bg-green-500 text-xs text-black px-2 py-0.5 rounded-bl-lg">
+                Economiza 10%
+              </div>
+              <div class="flex justify-between items-start">
+                <div>
+                  <span class="text-lg font-bold">R$134</span>
+                  <span class="text-gray-400 text-sm">/mês</span>
+                  <div class="text-xs text-gray-500 line-through">R$149/mês</div>
+                </div>
+                <span class="text-xs bg-gray-700 px-2 py-1 rounded">3 meses</span>
+              </div>
+              <a href="https://wa.me/5511999999999?text=Olá,%20quero%20o%20plano%20Básico%20(3%20meses)%20do%20HelixMenu!%20Pago%20no%20PIX%20para%20ganhar%20mais%208%25%20OFF!" target="_blank" class="mt-3 block w-full bg-red-600 hover:bg-red-700 text-white text-center py-2 rounded-lg text-sm font-medium">
+                Contratar (+8% OFF no PIX)
+              </a>
+            </div>
+
+            <!-- 12 meses -->
+            <div class="border border-green-500/30 rounded-lg p-4 bg-gray-900/50 relative">
+              <div class="absolute top-0 right-0 bg-green-500 text-xs text-black px-2 py-0.5 rounded-bl-lg">
+                Economiza 22%
+              </div>
+              <div class="flex justify-between items-start">
+                <div>
+                  <span class="text-lg font-bold">R$116</span>
+                  <span class="text-gray-400 text-sm">/mês</span>
+                  <div class="text-xs text-gray-500 line-through">R$149/mês</div>
+                </div>
+                <span class="text-xs bg-gray-700 px-2 py-1 rounded">12 meses</span>
+              </div>
+              <a href="https://wa.me/5511999999999?text=Olá,%20quero%20o%20plano%20Básico%20(12%20meses)%20do%20HelixMenu!%20Pago%20no%20PIX%20para%20ganhar%20mais%208%25%20OFF!" target="_blank" class="mt-3 block w-full bg-red-600 hover:bg-red-700 text-white text-center py-2 rounded-lg text-sm font-medium">
+                Contratar (+8% OFF no PIX)
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Premium Plan (Highlighted) -->
+        <div class="relative bg-gradient-to-b from-gray-900 to-gray-800 border-2 border-yellow-400 rounded-2xl p-6 flex flex-col">
+          <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-yellow-400 text-gray-900 text-xs font-bold px-3 py-1 rounded-full z-10">
+            MAIS POPULAR
+          </div>
+          <h3 class="text-2xl font-bold text-yellow-400 mb-4 mt-2">Premium</h3>
+          <ul class="feature-list space-y-2 mb-6 text-left text-sm">
+            <li>Tudo do plano Básico</li>
+            <li>Gestão de pedidos integrada</li>
+            <li>Suporte prioritário</li>
+          </ul>
+
+          <div class="space-y-4 mt-auto">
+            <!-- 1 mês -->
+            <div class="border border-gray-700 rounded-lg p-4 bg-gray-900/50">
+              <div class="flex justify-between items-start">
+                <div>
+                  <span class="text-lg font-bold">R$449</span>
+                  <span class="text-gray-400 text-sm">/mês</span>
+                </div>
+                <span class="text-xs bg-gray-700 px-2 py-1 rounded">1 mês</span>
+              </div>
+              <a href="https://wa.me/5511999999999?text=Olá,%20quero%20o%20plano%20Premium%20(1%20mês)%20do%20HelixMenu!" target="_blank" class="mt-3 block w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 text-center py-2 rounded-lg text-sm font-medium">
+                Contratar
+              </a>
+            </div>
+
+            <!-- 3 meses -->
+            <div class="border border-green-500/30 rounded-lg p-4 bg-gray-900/50 relative">
+              <div class="absolute top-0 right-0 bg-green-500 text-xs text-black px-2 py-0.5 rounded-bl-lg">
+                Economiza 10%
+              </div>
+              <div class="flex justify-between items-start">
+                <div>
+                  <span class="text-lg font-bold">R$404</span>
+                  <span class="text-gray-400 text-sm">/mês</span>
+                  <div class="text-xs text-gray-500 line-through">R$449/mês</div>
+                </div>
+                <span class="text-xs bg-gray-700 px-2 py-1 rounded">3 meses</span>
+              </div>
+              <a href="https://wa.me/5511999999999?text=Olá,%20quero%20o%20plano%20Premium%20(3%20meses)%20do%20HelixMenu!%20Pago%20no%20PIX%20para%20ganhar%20mais%208%25%20OFF!" target="_blank" class="mt-3 block w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 text-center py-2 rounded-lg text-sm font-medium">
+                Contratar (+8% OFF no PIX)
+              </a>
+            </div>
+
+            <!-- 12 meses -->
+            <div class="border border-green-500/30 rounded-lg p-4 bg-gray-900/50 relative">
+              <div class="absolute top-0 right-0 bg-green-500 text-xs text-black px-2 py-0.5 rounded-bl-lg">
+                Economiza 22%
+              </div>
+              <div class="flex justify-between items-start">
+                <div>
+                  <span class="text-lg font-bold">R$350</span>
+                  <span class="text-gray-400 text-sm">/mês</span>
+                  <div class="text-xs text-gray-500 line-through">R$449/mês</div>
+                </div>
+                <span class="text-xs bg-gray-700 px-2 py-1 rounded">12 meses</span>
+              </div>
+              <a href="https://wa.me/5511999999999?text=Olá,%20quero%20o%20plano%20Premium%20(12%20meses)%20do%20HelixMenu!%20Pago%20no%20PIX%20para%20ganhar%20mais%208%25%20OFF!" target="_blank" class="mt-3 block w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 text-center py-2 rounded-lg text-sm font-medium">
+                Contratar (+8% OFF no PIX)
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deluxe Plan -->
+        <div class="bg-gray-800/70 border border-purple-500/30 rounded-2xl p-6 flex flex-col">
+          <h3 class="text-2xl font-bold text-purple-400 mb-4">Deluxe</h3>
+          <ul class="feature-list space-y-2 mb-6 text-left text-sm">
+            <li>Tudo do plano Premium</li>
+            <li>Gestão de estoque (em breve)</li>
+            <li>Relatórios mensais</li>
+            <li>Suporte VIP</li>
+          </ul>
+
+          <div class="space-y-4 mt-auto">
+            <!-- 1 mês -->
+            <div class="border border-gray-700 rounded-lg p-4 bg-gray-900/50">
+              <div class="flex justify-between items-start">
+                <div>
+                  <span class="text-lg font-bold">R$549</span>
+                  <span class="text-gray-400 text-sm">/mês</span>
+                </div>
+                <span class="text-xs bg-gray-700 px-2 py-1 rounded">1 mês</span>
+              </div>
+              <a href="https://wa.me/5511999999999?text=Olá,%20quero%20o%20plano%20Deluxe%20(1%20mês)%20do%20HelixMenu!" target="_blank" class="mt-3 block w-full bg-purple-600 hover:bg-purple-700 text-white text-center py-2 rounded-lg text-sm font-medium">
+                Contratar
+              </a>
+            </div>
+
+            <!-- 3 meses -->
+            <div class="border border-green-500/30 rounded-lg p-4 bg-gray-900/50 relative">
+              <div class="absolute top-0 right-0 bg-green-500 text-xs text-black px-2 py-0.5 rounded-bl-lg">
+                Economiza 10%
+              </div>
+              <div class="flex justify-between items-start">
+                <div>
+                  <span class="text-lg font-bold">R$494</span>
+                  <span class="text-gray-400 text-sm">/mês</span>
+                  <div class="text-xs text-gray-500 line-through">R$549/mês</div>
+                </div>
+                <span class="text-xs bg-gray-700 px-2 py-1 rounded">3 meses</span>
+              </div>
+              <a href="https://wa.me/5511999999999?text=Olá,%20quero%20o%20plano%20Deluxe%20(3%20meses)%20do%20HelixMenu!%20Pago%20no%20PIX%20para%20ganhar%20mais%208%25%20OFF!" target="_blank" class="mt-3 block w-full bg-purple-600 hover:bg-purple-700 text-white text-center py-2 rounded-lg text-sm font-medium">
+                Contratar (+8% OFF no PIX)
+              </a>
+            </div>
+
+            <!-- 12 meses -->
+            <div class="border border-green-500/30 rounded-lg p-4 bg-gray-900/50 relative">
+              <div class="absolute top-0 right-0 bg-green-500 text-xs text-black px-2 py-0.5 rounded-bl-lg">
+                Economiza 22%
+              </div>
+              <div class="flex justify-between items-start">
+                <div>
+                  <span class="text-lg font-bold">R$428</span>
+                  <span class="text-gray-400 text-sm">/mês</span>
+                  <div class="text-xs text-gray-500 line-through">R$549/mês</div>
+                </div>
+                <span class="text-xs bg-gray-700 px-2 py-1 rounded">12 meses</span>
+              </div>
+              <a href="https://wa.me/5511999999999?text=Olá,%20quero%20o%20plano%20Deluxe%20(12%20meses)%20do%20HelixMenu!%20Pago%20no%20PIX%20para%20ganhar%20mais%208%25%20OFF!" target="_blank" class="mt-3 block w-full bg-purple-600 hover:bg-purple-700 text-white text-center py-2 rounded-lg text-sm font-medium">
+                Contratar (+8% OFF no PIX)
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-16 px-4 text-center bg-gray-900/50">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-3xl font-bold mb-4">Pronto para Modernizar Seu Restaurante?</h2>
+      <p class="text-gray-300 mb-8">
+        Junte-se a dezenas de restaurantes que já usam o HelixMenu para aumentar pedidos, reduzir erros e encantar clientes.
+      </p>
+      <a href="https://wa.me/5511999999999?text=Quero%20criar%20meu%20cardápio%20digital%20com%20o%20HelixMenu!" target="_blank" class="bg-gradient-to-r from-red-600 to-yellow-600 text-white font-bold py-4 px-10 rounded-full text-lg shadow-lg hover:opacity-90 transition inline-flex items-center gap-2">
+        <i class="fab fa-whatsapp"></i> Fale Conosco no WhatsApp
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-8 px-4 text-center text-gray-500 text-sm">
+    <p>© 2025 HelixMenu – Cardápios Digitais Imersivos. Todos os direitos reservados.</p>
+    <p class="mt-2">Desenvolvido com ❤️ para o futuro da alimentação.</p>
+  </footer>
+</body>
+</html>
