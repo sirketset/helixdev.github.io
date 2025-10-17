@@ -147,6 +147,64 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             cursor: pointer;
         }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 60;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: #111827;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            max-width: 400px;
+            width: 90%;
+            color: white;
+        }
+        .modal h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: #facc15;
+        }
+        .modal input {
+            width: 100%;
+            padding: 8px 12px;
+            margin: 6px 0 12px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            color: white;
+        }
+        .modal .error {
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-top: 4px;
+            min-height: 1.2rem;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .modal-buttons button {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .modal-buttons .cancel {
+            background: #374151;
+        }
+        .modal-buttons .confirm {
+            background: linear-gradient(to right, #ef4444, #f59f00);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -278,13 +336,41 @@
         </div>
     </div>
 
+    <!-- Modal Mesa -->
+    <div id="tableModal" class="modal">
+        <div class="modal-content">
+            <h3>📍 Número da Mesa</h3>
+            <input type="text" id="tableNumberInput" placeholder="Ex: 5" maxlength="10" />
+            <div id="tableError" class="error"></div>
+            <div class="modal-buttons">
+                <button class="cancel" id="cancelTable">Cancelar</button>
+                <button class="confirm" id="sendTableOrder">Enviar Pedido à Cozinha</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Delivery -->
+    <div id="deliveryModal" class="modal">
+        <div class="modal-content">
+            <h3>🏠 Seu Endereço</h3>
+            <input type="text" id="streetInput" placeholder="Rua" />
+            <input type="text" id="numberInput" placeholder="Número" maxlength="10" />
+            <input type="text" id="cepInput" placeholder="CEP" maxlength="9" />
+            <div id="deliveryError" class="error"></div>
+            <div class="modal-buttons">
+                <button class="cancel" id="cancelDelivery">Cancelar</button>
+                <button class="confirm" id="sendDeliveryOrder">Enviar Pedido à Cozinha</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // === Configuração do Restaurante ===
         const restaurantConfig = {
             name: "Helix Menu",
             address: "Rua dos Hot Dogs, 123",
             phone: "(11) 99999-9999",
-            whatsapp: "5511999999999",
+            whatsapp: "5511911324392", // Corrigido para o número real
             email: "contato@mirimdog.com.br",
             hours: {
                 monday: { open: "10:00", close: "22:00" },
@@ -337,9 +423,9 @@
                     introMesa: "🍽️ *NOVO PEDIDO – MESA*\n",
                     introDelivery: "🚚 *NOVO PEDIDO – DELIVERY*\n",
                     introRetirada: "🛍️ *NOVO PEDIDO – RETIRADA*\n",
-                    tablePrompt: "\n📍 *Qual é o número da sua mesa?*\n(Digite apenas o número, por exemplo: 5)",
+                    tablePrompt: "\n📍 *Mesa:* ",
                     paymentPrompt: "\n💳 *Forma de pagamento?*\n1: Pix\n2: Crédito\n3: Débito\n4: Dinheiro\n(Digite o número correspondente)",
-                    addressPrompt: "\n🏠 *Por favor, envie seu endereço completo (rua, número, bairro, cidade):*"
+                    addressPrompt: "\n🏠 *Endereço:* "
                 },
                 removeLabel: "Remover ingredientes:",
                 addLabel: "Adicionar extras (+):",
@@ -379,9 +465,9 @@
                     introMesa: "🍽️ *NEW ORDER – TABLE*\n",
                     introDelivery: "🚚 *NEW ORDER – DELIVERY*\n",
                     introRetirada: "🛍️ *NEW ORDER – PICKUP*\n",
-                    tablePrompt: "\n📍 *What is your table number?*\n(Just type the number, e.g.: 5)",
+                    tablePrompt: "\n📍 *Table:* ",
                     paymentPrompt: "\n💳 *Payment method?*\n1: Pix\n2: Credit\n3: Debit\n4: Cash\n(Type the corresponding number)",
-                    addressPrompt: "\n🏠 *Please send your full address (street, number, neighborhood, city):*"
+                    addressPrompt: "\n🏠 *Address:* "
                 },
                 removeLabel: "Remove ingredients:",
                 addLabel: "Add extras (+):",
@@ -421,9 +507,9 @@
                     introMesa: "🍽️ *NUEVO PEDIDO – MESA*\n",
                     introDelivery: "🚚 *NUEVO PEDIDO – DELIVERY*\n",
                     introRetirada: "🛍️ *NUEVO PEDIDO – RECOGER*\n",
-                    tablePrompt: "\n📍 *¿Cuál es el número de tu mesa?*\n(Solo escribe el número, ej.: 5)",
+                    tablePrompt: "\n📍 *Mesa:* ",
                     paymentPrompt: "\n💳 *¿Forma de pago?*\n1: Pix\n2: Crédito\n3: Débito\n4: Efectivo\n(Escribe el número correspondiente)",
-                    addressPrompt: "\n🏠 *Por favor, envía tu dirección completa (calle, número, barrio, ciudad):*"
+                    addressPrompt: "\n🏠 *Dirección:* "
                 },
                 removeLabel: "Eliminar ingredientes:",
                 addLabel: "Agregar extras (+):",
@@ -463,9 +549,9 @@
                     introMesa: "🍽️ *NEUE BESTELLUNG – TISCH*\n",
                     introDelivery: "🚚 *NEUE BESTELLUNG – LIEFERUNG*\n",
                     introRetirada: "🛍️ *NEUE BESTELLUNG – ABHOLUNG*\n",
-                    tablePrompt: "\n📍 *Wie lautet Ihre Tischnummer?*\n(Geben Sie nur die Nummer ein, z. B.: 5)",
+                    tablePrompt: "\n📍 *Tisch:* ",
                     paymentPrompt: "\n💳 *Zahlungsmethode?*\n1: Pix\n2: Kreditkarte\n3: Debitkarte\n4: Bargeld\n(Geben Sie die entsprechende Zahl ein)",
-                    addressPrompt: "\n🏠 *Bitte senden Sie Ihre vollständige Adresse (Straße, Hausnummer, Stadt):*"
+                    addressPrompt: "\n🏠 *Adresse:* "
                 },
                 removeLabel: "Zutaten entfernen:",
                 addLabel: "Extras hinzufügen (+):",
@@ -505,9 +591,9 @@
                     introMesa: "🍽️ *NOUVELLE COMMANDE – TABLE*\n",
                     introDelivery: "🚚 *NOUVELLE COMMANDE – LIVRAISON*\n",
                     introRetirada: "🛍️ *NOUVELLE COMMANDE – À EMPORTER*\n",
-                    tablePrompt: "\n📍 *Quel est le numéro de votre table ?*\n(Saisissez uniquement le numéro, ex. : 5)",
+                    tablePrompt: "\n📍 *Table:* ",
                     paymentPrompt: "\n💳 *Mode de paiement ?*\n1: Pix\n2: Carte de crédit\n3: Carte de débit\n4: Espèces\n(Saisissez le numéro correspondant)",
-                    addressPrompt: "\n🏠 *Veuillez envoyer votre adresse complète (rue, numéro, quartier, ville) :*"
+                    addressPrompt: "\n🏠 *Adresse:* "
                 },
                 removeLabel: "Supprimer des ingrédients :",
                 addLabel: "Ajouter des extras (+) :",
@@ -547,9 +633,9 @@
                     introMesa: "🍽️ *新規注文 – テーブル*\n",
                     introDelivery: "🚚 *新規注文 – 配達*\n",
                     introRetirada: "🛍️ *新規注文 – 受け取り*\n",
-                    tablePrompt: "\n📍 *テーブル番号を教えてください*\n(例: 5 のように数字のみ入力)",
+                    tablePrompt: "\n📍 *テーブル番号:* ",
                     paymentPrompt: "\n💳 *お支払い方法は？*\n1: Pix\n2: クレジット\n3: デビット\n4: 現金\n(対応する数字を入力)",
-                    addressPrompt: "\n🏠 *住所を入力してください（通り、番号、地域、市）:*"
+                    addressPrompt: "\n🏠 *住所:* "
                 },
                 removeLabel: "削除する材料:",
                 addLabel: "追加オプション (+):",
@@ -589,9 +675,9 @@
                     introMesa: "🍽️ *新訂單 – 內用*\n",
                     introDelivery: "🚚 *新訂單 – 外送*\n",
                     introRetirada: "🛍️ *新訂單 – 取餐*\n",
-                    tablePrompt: "\n📍 *請問您的桌號是？*\n(僅輸入數字，例如：5)",
+                    tablePrompt: "\n📍 *桌號:* ",
                     paymentPrompt: "\n💳 *付款方式？*\n1: Pix\n2: 信用卡\n3: 金融卡\n4: 現金\n(請輸入對應數字)",
-                    addressPrompt: "\n🏠 *請提供完整地址（街道、號碼、區域、城市）：*"
+                    addressPrompt: "\n🏠 *地址:* "
                 },
                 removeLabel: "移除食材：",
                 addLabel: "額外加購 (+)：",
@@ -719,7 +805,7 @@
                 name: { pt: 'Café Expresso', en: 'Espresso Coffee', es: 'Café Expreso', de: 'Espressokaffee', fr: 'Café Expresso', ja: 'エスプレッソ', "zh-TW": '濃縮咖啡' },
                 price: 8.90,
                 dnaColor: '#6b462c',
-                imageData: 'image/webp;base64,UklGRsQAAABXRUJQVlA4WAoAAAAQAAAAADwAABQAAQUxQSLsAAAABJaFRv4GIjI2Oj4+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur6CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/...',
+                imageData: 'image/',
                 category: 'bebidas_quentes',
                 ingredients: {
                     pt: ['Café expresso'],
@@ -737,7 +823,7 @@
                 name: { pt: 'Capuccino', en: 'Cappuccino', es: 'Capuchino', de: 'Cappuccino', fr: 'Cappuccino', ja: 'カプチーノ', "zh-TW": '卡布奇諾' },
                 price: 12.90,
                 dnaColor: '#d2b48c',
-                imageData: 'image/webp;base64,UklGRsoAAABXRUJQVlA4WAoAAAAQAAAAADwAABQAAQUxQSLsAAAABJaFRv4GIjI2Oj4+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur6CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/...',
+                imageData: 'image/',
                 category: 'bebidas_quentes',
                 ingredients: {
                     pt: ['Café, leite vaporizado, espuma'],
@@ -757,7 +843,7 @@
                 name: { pt: 'Refrigerante 600ml', en: 'Soda 600ml', es: 'Refresco 600ml', de: 'Limonade 600ml', fr: 'Soda 600ml', ja: 'ソーダ 600ml', "zh-TW": '汽水 600ml' },
                 price: 9.90,
                 dnaColor: '#3b82f6',
-                imageData: 'image/webp;base64,UklGRs0AAABXRUJQVlA4WAoAAAAQAAAAADwAABQAAQUxQSLsAAAABJaFRv4GIjI2Oj4+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur6CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/...',
+                imageData: 'image/',
                 category: 'bebidas_frias',
                 ingredients: {
                     pt: ['Refrigerante'],
@@ -892,6 +978,7 @@
         let isSidebarOpen = window.innerWidth >= 768;
         const sidebar = document.getElementById('mobileSidebar');
         const toggleBtn = document.getElementById('sidebarToggle');
+
         function toggleSidebar() {
             isSidebarOpen = !isSidebarOpen;
             sidebar.classList.toggle('-translate-x-full', !isSidebarOpen);
@@ -957,10 +1044,12 @@
             pickupBtn.textContent = t.pickup;
             deliveryBtnCart.textContent = t.delivery;
             tableBtn.textContent = t.table;
+
             if (cart.length === 0) {
                 const emptyMsg = cartItems.querySelector('.text-center');
                 if (emptyMsg) emptyMsg.textContent = t.cartEmpty;
             }
+
             updateCart();
             updateRestaurantInfo();
         }
@@ -1012,20 +1101,31 @@
             document.getElementById('contact-section').appendChild(statusEl);
         }
 
-        function generateOrderMessage(type) {
+        function generateOrderMessage(type, extraData = {}) {
             const t = languages[currentLang];
             let customerMessage = '';
             let internalMessage = '📌 *PEDIDO INTERNO (FUNCIONÁRIOS)*\n';
+
             if (type === 'Mesa') {
                 customerMessage = t.whatsappMessages.introMesa;
                 internalMessage += '🍽️ *Novo Pedido para Mesa*\n';
+                if (extraData.tableNumber) {
+                    customerMessage += t.whatsappMessages.tablePrompt + extraData.tableNumber;
+                    internalMessage += "📍 Mesa: " + extraData.tableNumber + "\n";
+                }
             } else if (type === 'Delivery') {
                 customerMessage = t.whatsappMessages.introDelivery;
                 internalMessage += '🚚 *Novo Pedido para Delivery*\n';
+                if (extraData.street && extraData.number && extraData.cep) {
+                    const fullAddress = `${extraData.street}, ${extraData.number} - CEP: ${extraData.cep}`;
+                    customerMessage += t.whatsappMessages.addressPrompt + fullAddress;
+                    internalMessage += "🏠 Endereço: " + fullAddress + "\n";
+                }
             } else if (type === 'Retirada') {
                 customerMessage = t.whatsappMessages.introRetirada;
                 internalMessage += '🛍️ *Novo Pedido para Retirada*\n';
             }
+
             cart.forEach(item => {
                 const customerName = typeof item.name === 'object' ? item.name[currentLang] : item.name;
                 const internalName = item.name.pt || item.name;
@@ -1048,21 +1148,89 @@
                 customerMessage += '\n';
                 internalMessage += '\n';
             });
+
             const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0).toFixed(2).replace('.', ',');
             customerMessage += `💰 *Total:* R$ ${total}\n`;
             customerMessage += `\n━━━━━━━━━━━━━━━━━━━━\n`;
+
             if (type === 'Mesa') {
-                customerMessage += t.whatsappMessages.tablePrompt;
+                customerMessage += t.whatsappMessages.paymentPrompt;
             } else if (type === 'Delivery') {
                 customerMessage += t.whatsappMessages.paymentPrompt;
-                customerMessage += t.whatsappMessages.addressPrompt;
             } else if (type === 'Retirada') {
                 customerMessage += t.whatsappMessages.paymentPrompt;
             }
+
             const fullMessage = customerMessage + '\n' + internalMessage.trim();
             return encodeURIComponent(fullMessage);
         }
 
+        // === Modais de Mesa e Delivery ===
+        const tableModal = document.getElementById('tableModal');
+        const deliveryModal = document.getElementById('deliveryModal');
+        const tableNumberInput = document.getElementById('tableNumberInput');
+        const streetInput = document.getElementById('streetInput');
+        const numberInput = document.getElementById('numberInput');
+        const cepInput = document.getElementById('cepInput');
+        const tableError = document.getElementById('tableError');
+        const deliveryError = document.getElementById('deliveryError');
+
+        tableBtn.addEventListener('click', () => {
+            if (cart.length === 0) {
+                alert(languages[currentLang].cartEmpty);
+                return;
+            }
+            tableNumberInput.value = '';
+            tableError.textContent = '';
+            tableModal.style.display = 'flex';
+        });
+
+        deliveryBtnCart.addEventListener('click', () => {
+            if (cart.length === 0) {
+                alert(languages[currentLang].cartEmpty);
+                return;
+            }
+            streetInput.value = '';
+            numberInput.value = '';
+            cepInput.value = '';
+            deliveryError.textContent = '';
+            deliveryModal.style.display = 'flex';
+        });
+
+        document.getElementById('cancelTable').onclick = () => tableModal.style.display = 'none';
+        document.getElementById('cancelDelivery').onclick = () => deliveryModal.style.display = 'none';
+
+        document.getElementById('sendTableOrder').onclick = () => {
+            const tableNum = tableNumberInput.value.trim();
+            if (!tableNum) {
+                tableError.textContent = 'Por favor, informe o número da mesa.';
+                return;
+            }
+            tableError.textContent = '';
+            const message = generateOrderMessage('Mesa', { tableNumber: tableNum });
+            window.open(`https://wa.me/${restaurantConfig.whatsapp}?text=${message}`, '_blank');
+            tableModal.style.display = 'none';
+        };
+
+        document.getElementById('sendDeliveryOrder').onclick = () => {
+            const street = streetInput.value.trim();
+            const number = numberInput.value.trim();
+            const cep = cepInput.value.trim().replace(/\D/g, '');
+            if (!street || !number || !cep) {
+                deliveryError.textContent = 'Por favor, preencha todos os campos.';
+                return;
+            }
+            if (cep.length !== 8) {
+                deliveryError.textContent = 'CEP inválido. Informe 8 dígitos.';
+                return;
+            }
+            deliveryError.textContent = '';
+            const message = generateOrderMessage('Delivery', { street, number, cep });
+            window.open(`https://wa.me/${restaurantConfig.whatsapp}?text=${message}`, '_blank');
+            deliveryModal.style.display = 'none';
+        };
+
+        // === Restante da lógica original ===
         const langToggle = document.getElementById('langToggle');
         const langDropdown = document.getElementById('langDropdown');
         langToggle.addEventListener('click', (e) => {
@@ -1074,7 +1242,6 @@
                 langDropdown.classList.add('hidden');
             }
         });
-
         langDropdown.querySelectorAll('[data-lang]').forEach(btn => {
             btn.addEventListener('click', () => {
                 currentLang = btn.getAttribute('data-lang');
@@ -1137,15 +1304,18 @@
             const t = languages[currentLang];
             const productName = typeof product.name === 'object' ? product.name[currentLang] : product.name;
             const customization = { product, removed: [], added: [], observation: '', totalPrice: product.price };
+
             document.getElementById('customizeTitle').textContent = productName;
             document.getElementById('removeLabel').textContent = t.removeLabel;
             document.getElementById('addLabel').textContent = t.addLabel;
             document.getElementById('obsLabel').textContent = t.obsLabel;
             document.getElementById('customObservation').placeholder = t.obsPlaceholder;
+
             const ingredientsEl = document.getElementById('ingredientsList');
             const extrasEl = document.getElementById('extrasList');
             ingredientsEl.innerHTML = '';
             extrasEl.innerHTML = '';
+
             const ingredients = typeof product.ingredients === 'object' ? product.ingredients[currentLang] : product.ingredients;
             ingredients.forEach(ing => {
                 const div = document.createElement('div');
@@ -1153,6 +1323,7 @@
                 div.innerHTML = `<input type="checkbox" value="${ing}" class="mr-2 remove-ing"><span>${ing}</span>`;
                 ingredientsEl.appendChild(div);
             });
+
             const extras = product.extras.map(extra => ({
                 name: typeof extra.name === 'object' ? extra.name[currentLang] : extra.name,
                 price: extra.price
@@ -1169,18 +1340,21 @@
                 `;
                 extrasEl.appendChild(div);
             });
+
             const modal = document.getElementById('customizeModal');
             modal.classList.remove('hidden');
             setTimeout(() => {
                 document.getElementById('customizeContent').classList.remove('scale-95', 'opacity-0');
                 document.getElementById('customizeContent').classList.add('scale-100', 'opacity-100');
             }, 10);
+
             document.querySelectorAll('.add-extra').forEach(cb => {
                 cb.onchange = function() {
                     const price = parseFloat(this.dataset.price);
                     customization.totalPrice += this.checked ? price : -price;
                 };
             });
+
             document.getElementById('addToCartCustom').onclick = function() {
                 customization.removed = Array.from(document.querySelectorAll('.remove-ing:checked')).map(cb => cb.value);
                 customization.added = Array.from(document.querySelectorAll('.add-extra:checked')).map(cb => ({ 
@@ -1203,6 +1377,7 @@
                 hideCustomizeModal();
                 showModal(product);
             };
+
             document.getElementById('cancelCustomize').onclick = hideCustomizeModal;
         }
 
@@ -1254,6 +1429,7 @@
                 canvas.width = 256;
                 canvas.height = 256;
                 const ctx = canvas.getContext('2d');
+
                 function drawBackground() {
                     const gradient = ctx.createLinearGradient(0, 0, 0, 256);
                     gradient.addColorStop(0, produto.dnaColor);
@@ -1261,6 +1437,7 @@
                     ctx.fillStyle = gradient;
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
+
                 function drawFallback() {
                     drawBackground();
                     ctx.font = 'bold 18px sans-serif';
@@ -1271,6 +1448,7 @@
                     ctx.fillStyle = '#facc15';
                     ctx.fillText(`R$ ${produto.price.toFixed(2)}`, canvas.width / 2, 250);
                 }
+
                 function drawProductImage() {
                     drawBackground();
                     const img = new Image();
@@ -1296,6 +1474,7 @@
                     };
                     img.src = produto.imageData;
                 }
+
                 const texture = new THREE.CanvasTexture(canvas);
                 const geometry = new THREE.PlaneGeometry(140, 140);
                 const material = new THREE.MeshStandardMaterial({ map: texture, side: THREE.DoubleSide });
@@ -1313,6 +1492,7 @@
                 objects.push(mesh);
                 drawProductImage();
             }
+
             if (currentCategory === 'all') {
                 const xTudoIndex = menuData.findIndex(p => p.id === 1);
                 if (xTudoIndex !== -1) {
@@ -1404,23 +1584,14 @@
             }
         });
 
-        function finalizeOrder() {
+        pickupBtn.addEventListener('click', () => {
             if (cart.length === 0) {
                 alert(languages[currentLang].cartEmpty);
                 return;
             }
-            let type = '';
-            if (this.id === 'pickupBtn') type = 'Retirada';
-            else if (this.id === 'deliveryBtnCart') type = 'Delivery';
-            else if (this.id === 'tableBtn') type = 'Mesa';
-            const message = generateOrderMessage(type);
-            const url = `https://wa.me/55${restaurantConfig.whatsapp}?text=${message}`;
-            window.open(url, '_blank');
-        }
-
-        pickupBtn.addEventListener('click', finalizeOrder);
-        deliveryBtnCart.addEventListener('click', finalizeOrder);
-        tableBtn.addEventListener('click', finalizeOrder);
+            const message = generateOrderMessage('Retirada');
+            window.open(`https://wa.me/${restaurantConfig.whatsapp}?text=${message}`, '_blank');
+        });
 
         window.addEventListener('resize', () => {
             updateRendererSize();
