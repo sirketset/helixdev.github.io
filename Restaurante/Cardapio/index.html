@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Helix Menu - Cardápio Hiperdimensional</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -28,6 +28,8 @@
             background: linear-gradient(135deg, #0f172a, #1e293b);
             overflow: hidden;
             color: white;
+            /* Impede zoom acidental no mobile */
+            touch-action: manipulation;
         }
         .sidebar {
             position: fixed;
@@ -128,6 +130,8 @@
             width: 100%;
             height: 100%;
             z-index: 10;
+            /* Permite touch para scroll, mas não zoom */
+            touch-action: pan-y;
         }
         #sidebarToggle {
             position: fixed;
@@ -335,7 +339,6 @@
             </div>
         </div>
     </div>
-
     <!-- Modal Mesa -->
     <div id="tableModal" class="modal">
         <div class="modal-content">
@@ -348,7 +351,6 @@
             </div>
         </div>
     </div>
-
     <!-- Modal Delivery -->
     <div id="deliveryModal" class="modal">
         <div class="modal-content">
@@ -363,14 +365,13 @@
             </div>
         </div>
     </div>
-
     <script>
         // === Configuração do Restaurante ===
         const restaurantConfig = {
             name: "Helix Menu",
             address: "Rua dos Hot Dogs, 123",
             phone: "(11) 99999-9999",
-            whatsapp: "5511911324392", // Corrigido para o número real
+            whatsapp: "5511911324392",
             email: "contato@mirimdog.com.br",
             hours: {
                 monday: { open: "10:00", close: "22:00" },
@@ -380,7 +381,6 @@
             },
             specialNotice: "Horário pode variar em feriados. Confirme pelo WhatsApp!"
         };
-
         // === Traduções das categorias ===
         const categoryTranslations = {
             pt: { all: "Todos", lanches: "Lanches", bebidas_quentes: "Bebidas Quentes", bebidas_frias: "Bebidas Frias", drinks: "Drinks", aperitivos: "Aperitivos", especiais: "Especiais", combos: "Combos" },
@@ -391,7 +391,6 @@
             ja: { all: "すべて", lanches: "スナック", bebidas_quentes: "ホットドリンク", bebidas_frias: "コールドドリンク", drinks: "ドリンク", aperitivos: "前菜", especiais: "スペシャル", combos: "コンボ" },
             "zh-TW": { all: "全部", lanches: "小食", bebidas_quentes: "熱飲", bebidas_frias: "冷飲", drinks: "酒精飲料", aperitivos: "開胃菜", especiais: "特色菜", combos: "套餐" }
         };
-
         const languages = {
             pt: {
                 cartTitle: "🧾 Seu Pedido",
@@ -688,7 +687,6 @@
                 observationLabel: "備註"
             }
         };
-
         let currentLang = 'pt';
         const isMobile = /Mobi|Android/i.test(navigator.userAgent);
         const menuData = [
@@ -955,7 +953,6 @@
                 ]
             }
         ];
-
         let cart = [];
         const cartCount = document.getElementById('cartCount');
         const cartItems = document.getElementById('cartItems');
@@ -973,20 +970,21 @@
         const tableBtn = document.getElementById('tableBtn');
         const cartTitleEl = document.getElementById('cartTitle');
         const totalLabelEl = document.getElementById('totalLabel');
-
         // === Estado do sidebar mobile ===
         let isSidebarOpen = window.innerWidth >= 768;
         const sidebar = document.getElementById('mobileSidebar');
         const toggleBtn = document.getElementById('sidebarToggle');
-
         function toggleSidebar() {
             isSidebarOpen = !isSidebarOpen;
             sidebar.classList.toggle('-translate-x-full', !isSidebarOpen);
             toggleBtn.innerHTML = isSidebarOpen ? '❮' : '➤';
-            setTimeout(updateRendererSize, 300);
+            // Corrige o layout após abrir/fechar o sidebar
+            setTimeout(() => {
+                resetCameraZoom();
+                updateRendererSize();
+            }, 300);
         }
         toggleBtn.addEventListener('click', toggleSidebar);
-
         // === Three.js Setup ===
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
@@ -997,6 +995,7 @@
         scene.add(light);
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
         camera.position.z = 500;
+        camera.zoom = 1; // Zoom padrão
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setClearColor(0x0f172a);
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -1007,7 +1006,52 @@
         let scrollOffset = 0;
         let targetOffset = 0;
         let currentCategory = 'all';
-
+        // === Controle de interação ===
+        let isUserInteracting = false;
+        let isAutoScrolling = true;
+        let autoScrollSpeed = 0.0008;
+        let touchStartY = 0;
+        // === Pinch-to-zoom support ===
+        let initialDistance = 0;
+        let initialZoom = 1;
+        function getDistance(touches) {
+            const dx = touches[0].clientX - touches[1].clientX;
+            const dy = touches[0].clientY - touches[1].clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+        container.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                initialDistance = getDistance(e.touches);
+                initialZoom = camera.zoom;
+                isUserInteracting = true;
+                isAutoScrolling = false;
+            } else if (e.touches.length === 1) {
+                stopAutoScroll();
+                touchStartY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+        container.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                const currentDistance = getDistance(e.touches);
+                const zoomFactor = currentDistance / initialDistance;
+                camera.zoom = Math.min(Math.max(initialZoom * zoomFactor, 0.5), 2.0);
+                camera.updateProjectionMatrix();
+                e.preventDefault();
+            } else if (e.touches.length === 1) {
+                if (!isUserInteracting) isUserInteracting = true;
+                const touchY = e.touches[0].clientY;
+                const deltaY = touchStartY - touchY;
+                targetOffset += deltaY * 0.01;
+                touchStartY = touchY;
+            }
+        }, { passive: false });
+        container.addEventListener('touchend', () => {
+            // Opcional: reiniciar autoplay após X segundos
+        });
+        function resetCameraZoom() {
+            camera.zoom = 1;
+            camera.updateProjectionMatrix();
+        }
         function updateRendererSize() {
             const sidebarWidth = isSidebarOpen && window.innerWidth < 768 ? 280 : (window.innerWidth >= 768 ? 280 : 0);
             const width = window.innerWidth - sidebarWidth;
@@ -1017,23 +1061,18 @@
             renderer.setSize(width, height);
             container.style.marginLeft = sidebarWidth + 'px';
         }
-
         function formatTime(slot) {
             return `${slot.open.replace(':00', 'h')} – ${slot.close.replace(':00', 'h')}`;
         }
-
         function updateLanguage() {
             const t = languages[currentLang];
             const langButton = document.getElementById('langToggle');
             const langLabels = { pt: 'PT', en: 'EN', es: 'ES', de: 'DE', fr: 'FR', ja: 'JA', "zh-TW": '中文' };
             langButton.textContent = langLabels[currentLang] || currentLang.toUpperCase();
-
-            // Atualiza categorias
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 const cat = btn.dataset.category;
                 btn.textContent = categoryTranslations[currentLang][cat] || cat;
             });
-
             document.getElementById('currentProduct').textContent = t.productNav;
             document.getElementById('cartButton').innerHTML = t.cartButton;
             if (cartTitleEl) cartTitleEl.textContent = t.cartTitle;
@@ -1044,16 +1083,13 @@
             pickupBtn.textContent = t.pickup;
             deliveryBtnCart.textContent = t.delivery;
             tableBtn.textContent = t.table;
-
             if (cart.length === 0) {
                 const emptyMsg = cartItems.querySelector('.text-center');
                 if (emptyMsg) emptyMsg.textContent = t.cartEmpty;
             }
-
             updateCart();
             updateRestaurantInfo();
         }
-
         function updateRestaurantInfo() {
             const t = languages[currentLang];
             const contactSection = document.getElementById('contact-section');
@@ -1081,7 +1117,6 @@
             contactSection.innerHTML = html;
             updateOpenStatus();
         }
-
         function updateOpenStatus() {
             const t = languages[currentLang];
             const now = new Date();
@@ -1100,12 +1135,10 @@
             statusEl.textContent = isOpen ? t.openNow : t.closed;
             document.getElementById('contact-section').appendChild(statusEl);
         }
-
         function generateOrderMessage(type, extraData = {}) {
             const t = languages[currentLang];
             let customerMessage = '';
             let internalMessage = '📌 *PEDIDO INTERNO (FUNCIONÁRIOS)*\n';
-
             if (type === 'Mesa') {
                 customerMessage = t.whatsappMessages.introMesa;
                 internalMessage += '🍽️ *Novo Pedido para Mesa*\n';
@@ -1125,7 +1158,6 @@
                 customerMessage = t.whatsappMessages.introRetirada;
                 internalMessage += '🛍️ *Novo Pedido para Retirada*\n';
             }
-
             cart.forEach(item => {
                 const customerName = typeof item.name === 'object' ? item.name[currentLang] : item.name;
                 const internalName = item.name.pt || item.name;
@@ -1148,23 +1180,13 @@
                 customerMessage += '\n';
                 internalMessage += '\n';
             });
-
             const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0).toFixed(2).replace('.', ',');
             customerMessage += `💰 *Total:* R$ ${total}\n`;
             customerMessage += `\n━━━━━━━━━━━━━━━━━━━━\n`;
-
-            if (type === 'Mesa') {
-                customerMessage += t.whatsappMessages.paymentPrompt;
-            } else if (type === 'Delivery') {
-                customerMessage += t.whatsappMessages.paymentPrompt;
-            } else if (type === 'Retirada') {
-                customerMessage += t.whatsappMessages.paymentPrompt;
-            }
-
+            customerMessage += t.whatsappMessages.paymentPrompt;
             const fullMessage = customerMessage + '\n' + internalMessage.trim();
             return encodeURIComponent(fullMessage);
         }
-
         // === Modais de Mesa e Delivery ===
         const tableModal = document.getElementById('tableModal');
         const deliveryModal = document.getElementById('deliveryModal');
@@ -1174,7 +1196,6 @@
         const cepInput = document.getElementById('cepInput');
         const tableError = document.getElementById('tableError');
         const deliveryError = document.getElementById('deliveryError');
-
         tableBtn.addEventListener('click', () => {
             if (cart.length === 0) {
                 alert(languages[currentLang].cartEmpty);
@@ -1184,7 +1205,6 @@
             tableError.textContent = '';
             tableModal.style.display = 'flex';
         });
-
         deliveryBtnCart.addEventListener('click', () => {
             if (cart.length === 0) {
                 alert(languages[currentLang].cartEmpty);
@@ -1196,10 +1216,8 @@
             deliveryError.textContent = '';
             deliveryModal.style.display = 'flex';
         });
-
         document.getElementById('cancelTable').onclick = () => tableModal.style.display = 'none';
         document.getElementById('cancelDelivery').onclick = () => deliveryModal.style.display = 'none';
-
         document.getElementById('sendTableOrder').onclick = () => {
             const tableNum = tableNumberInput.value.trim();
             if (!tableNum) {
@@ -1211,7 +1229,6 @@
             window.open(`https://wa.me/${restaurantConfig.whatsapp}?text=${message}`, '_blank');
             tableModal.style.display = 'none';
         };
-
         document.getElementById('sendDeliveryOrder').onclick = () => {
             const street = streetInput.value.trim();
             const number = numberInput.value.trim();
@@ -1229,7 +1246,6 @@
             window.open(`https://wa.me/${restaurantConfig.whatsapp}?text=${message}`, '_blank');
             deliveryModal.style.display = 'none';
         };
-
         // === Restante da lógica original ===
         const langToggle = document.getElementById('langToggle');
         const langDropdown = document.getElementById('langDropdown');
@@ -1249,7 +1265,6 @@
                 langDropdown.classList.add('hidden');
             });
         });
-
         function updateCart() {
             if (cart.length === 0) {
                 cartItems.innerHTML = `<p class="text-gray-400 text-sm text-center py-4">${languages[currentLang].cartEmpty}</p>`;
@@ -1280,7 +1295,6 @@
             }
             cartCount.textContent = cart.reduce((sum, i) => sum + i.quantity, 0);
         }
-
         cartItems.addEventListener('click', (e) => {
             const id = parseInt(e.target.dataset.id);
             const item = cart.find(i => i.id === id);
@@ -1291,7 +1305,6 @@
             }
             if (!e.target.matches('.cart-input')) updateCart();
         });
-
         cartItems.addEventListener('input', (e) => {
             if (e.target.matches('.cart-input')) {
                 const id = parseInt(e.target.dataset.id);
@@ -1299,23 +1312,19 @@
                 if (item) item.observation = e.target.value;
             }
         });
-
         function addToCart(product) {
             const t = languages[currentLang];
             const productName = typeof product.name === 'object' ? product.name[currentLang] : product.name;
             const customization = { product, removed: [], added: [], observation: '', totalPrice: product.price };
-
             document.getElementById('customizeTitle').textContent = productName;
             document.getElementById('removeLabel').textContent = t.removeLabel;
             document.getElementById('addLabel').textContent = t.addLabel;
             document.getElementById('obsLabel').textContent = t.obsLabel;
             document.getElementById('customObservation').placeholder = t.obsPlaceholder;
-
             const ingredientsEl = document.getElementById('ingredientsList');
             const extrasEl = document.getElementById('extrasList');
             ingredientsEl.innerHTML = '';
             extrasEl.innerHTML = '';
-
             const ingredients = typeof product.ingredients === 'object' ? product.ingredients[currentLang] : product.ingredients;
             ingredients.forEach(ing => {
                 const div = document.createElement('div');
@@ -1323,7 +1332,6 @@
                 div.innerHTML = `<input type="checkbox" value="${ing}" class="mr-2 remove-ing"><span>${ing}</span>`;
                 ingredientsEl.appendChild(div);
             });
-
             const extras = product.extras.map(extra => ({
                 name: typeof extra.name === 'object' ? extra.name[currentLang] : extra.name,
                 price: extra.price
@@ -1340,21 +1348,18 @@
                 `;
                 extrasEl.appendChild(div);
             });
-
             const modal = document.getElementById('customizeModal');
             modal.classList.remove('hidden');
             setTimeout(() => {
                 document.getElementById('customizeContent').classList.remove('scale-95', 'opacity-0');
                 document.getElementById('customizeContent').classList.add('scale-100', 'opacity-100');
             }, 10);
-
             document.querySelectorAll('.add-extra').forEach(cb => {
                 cb.onchange = function() {
                     const price = parseFloat(this.dataset.price);
                     customization.totalPrice += this.checked ? price : -price;
                 };
             });
-
             document.getElementById('addToCartCustom').onclick = function() {
                 customization.removed = Array.from(document.querySelectorAll('.remove-ing:checked')).map(cb => cb.value);
                 customization.added = Array.from(document.querySelectorAll('.add-extra:checked')).map(cb => ({ 
@@ -1377,17 +1382,14 @@
                 hideCustomizeModal();
                 showModal(product);
             };
-
             document.getElementById('cancelCustomize').onclick = hideCustomizeModal;
         }
-
         function hideCustomizeModal() {
             const content = document.getElementById('customizeContent');
             content.classList.remove('scale-100', 'opacity-100');
             content.classList.add('scale-95', 'opacity-0');
             setTimeout(() => document.getElementById('customizeModal').classList.add('hidden'), 300);
         }
-
         function showModal(product) {
             const t = languages[currentLang];
             const productName = typeof product.name === 'object' ? product.name[currentLang] : product.name;
@@ -1398,16 +1400,13 @@
                 modalContent.classList.add('scale-100', 'opacity-100');
             }, 10);
         }
-
         function hideModal() {
             modalContent.classList.remove('scale-100', 'opacity-100');
             modalContent.classList.add('scale-95', 'opacity-0');
             setTimeout(() => addItemModal.classList.add('hidden'), 300);
         }
-
         continueShopping.addEventListener('click', hideModal);
         goToCart.addEventListener('click', hideModal);
-
         // === Sistema de Filtros e Cena 3D ===
         function recreate3DScene() {
             objects.forEach(obj => scene.remove(obj));
@@ -1429,7 +1428,6 @@
                 canvas.width = 256;
                 canvas.height = 256;
                 const ctx = canvas.getContext('2d');
-
                 function drawBackground() {
                     const gradient = ctx.createLinearGradient(0, 0, 0, 256);
                     gradient.addColorStop(0, produto.dnaColor);
@@ -1437,7 +1435,6 @@
                     ctx.fillStyle = gradient;
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                 }
-
                 function drawFallback() {
                     drawBackground();
                     ctx.font = 'bold 18px sans-serif';
@@ -1448,7 +1445,6 @@
                     ctx.fillStyle = '#facc15';
                     ctx.fillText(`R$ ${produto.price.toFixed(2)}`, canvas.width / 2, 250);
                 }
-
                 function drawProductImage() {
                     drawBackground();
                     const img = new Image();
@@ -1474,7 +1470,6 @@
                     };
                     img.src = produto.imageData;
                 }
-
                 const texture = new THREE.CanvasTexture(canvas);
                 const geometry = new THREE.PlaneGeometry(140, 140);
                 const material = new THREE.MeshStandardMaterial({ map: texture, side: THREE.DoubleSide });
@@ -1492,7 +1487,6 @@
                 objects.push(mesh);
                 drawProductImage();
             }
-
             if (currentCategory === 'all') {
                 const xTudoIndex = menuData.findIndex(p => p.id === 1);
                 if (xTudoIndex !== -1) {
@@ -1507,7 +1501,6 @@
                 scrollOffset = 0;
             }
         }
-
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 currentCategory = btn.dataset.category;
@@ -1523,22 +1516,37 @@
                 recreate3DScene();
             });
         });
-
+        // === Controles de navegação ===
+        function startAutoScroll() {
+            isAutoScrolling = true;
+            isUserInteracting = false;
+        }
+        function stopAutoScroll() {
+            isAutoScrolling = false;
+            isUserInteracting = true;
+        }
+        // Botões manuais
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            stopAutoScroll();
+            targetOffset -= 0.8;
+        });
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            stopAutoScroll();
+            targetOffset += 0.8;
+        });
+        // Scroll com mouse (desktop)
         if (!isMobile) {
             window.addEventListener('wheel', (e) => {
+                stopAutoScroll();
                 targetOffset += e.deltaY * 0.003;
             });
-        } else {
-            document.getElementById('prevBtn').addEventListener('click', () => {
-                targetOffset -= 0.8;
-            });
-            document.getElementById('nextBtn').addEventListener('click', () => {
-                targetOffset += 0.8;
-            });
         }
-
+        // === Animação principal ===
         function animate() {
             requestAnimationFrame(animate);
+            if (isAutoScrolling && !isUserInteracting) {
+                targetOffset += autoScrollSpeed;
+            }
             scrollOffset += (targetOffset - scrollOffset) * 0.1;
             let closestObj = null;
             let minDist = Infinity;
@@ -1566,7 +1574,6 @@
             }
             renderer.render(scene, camera);
         }
-
         renderer.domElement.addEventListener('click', (event) => {
             const sidebarWidth = isSidebarOpen && window.innerWidth < 768 ? 280 : (window.innerWidth >= 768 ? 280 : 0);
             const mouse = new THREE.Vector2(
@@ -1583,7 +1590,6 @@
                 }
             }
         });
-
         pickupBtn.addEventListener('click', () => {
             if (cart.length === 0) {
                 alert(languages[currentLang].cartEmpty);
@@ -1592,16 +1598,14 @@
             const message = generateOrderMessage('Retirada');
             window.open(`https://wa.me/${restaurantConfig.whatsapp}?text=${message}`, '_blank');
         });
-
         window.addEventListener('resize', () => {
             updateRendererSize();
         });
-
         updateRendererSize();
         recreate3DScene();
         updateLanguage();
         animate();
-
+        setTimeout(startAutoScroll, 2000);
         if (window.innerWidth < 768) {
             isSidebarOpen = false;
             sidebar.classList.add('-translate-x-full');
