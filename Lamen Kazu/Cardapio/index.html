@@ -1,0 +1,2387 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Helix Menu - Cardápio Hiperdimensional</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ef4444',
+                        secondary: '#f59f00',
+                        accent: '#facc15'
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            overflow: hidden;
+            color: white;
+            /* Impede zoom acidental no mobile */
+            touch-action: manipulation;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            height: 100vh;
+            width: 280px;
+            background: rgba(15, 15, 30, 0.95);
+            backdrop-filter: blur(12px);
+            border-right: 1px solid rgba(239, 68, 68, 0.3);
+            z-index: 30;
+            padding: 1.5rem;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+        }
+        canvas {
+            display: block;
+        }
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            padding: 0.75rem 1rem;
+            z-index: 25;
+            border-bottom: 1px solid rgba(239, 68, 68, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            pointer-events: none;
+            z-index: 20;
+        }
+        .btn {
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+            font-size: 1.25rem;
+            padding: 10px 20px;
+            border-radius: 14px;
+            cursor: pointer;
+            pointer-events: auto;
+            user-select: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease;
+        }
+        .btn:active { transform: scale(0.95); }
+        @media (min-width: 768px) {
+            .controls { display: none; }
+            #sidebarToggle { display: none !important; }
+        }
+        .cart-input {
+            width: 100%;
+            padding: 5px 8px;
+            margin-top: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            color: white;
+            font-size: 0.8rem;
+        }
+        .cart-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        .lang-dropdown {
+            transform-origin: top;
+            animation: dropdown-slide-down 0.2s ease-out;
+        }
+        @keyframes dropdown-slide-down {
+            from {
+                opacity: 0;
+                transform: scaleY(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scaleY(1);
+            }
+        }
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            /* Permite touch para scroll, mas não zoom */
+            touch-action: pan-y;
+        }
+        #sidebarToggle {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 35;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 60;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: #111827;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            max-width: 400px;
+            width: 90%;
+            color: white;
+        }
+        .modal h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: #facc15;
+        }
+        .modal input {
+            width: 100%;
+            padding: 8px 12px;
+            margin: 6px 0 12px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            color: white;
+        }
+        .modal .error {
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-top: 4px;
+            min-height: 1.2rem;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .modal-buttons button {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .modal-buttons .cancel {
+            background: #374151;
+        }
+        .modal-buttons .confirm {
+            background: linear-gradient(to right, #ef4444, #f59f00);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar retrátil -->
+    <aside id="mobileSidebar" class="sidebar -translate-x-full md:translate-x-0">
+        <div class="flex items-center mb-6">
+            <div class="mr-2 fire">🔥</div>
+            <h1 class="text-xl font-bold bg-gradient-to-r from-red-500 to-yellow-400 bg-clip-text text-transparent">
+                Helix Menu
+            </h1>
+        </div>
+        <div class="mt-4">
+            <h3 class="text-sm font-semibold text-gray-400 mb-2">Filtrar por categoria</h3>
+            <div id="categoryFilters" class="flex flex-wrap gap-2">
+                <button data-category="all" class="filter-btn bg-red-600 text-white px-3 py-1 rounded-full text-xs font-medium">Todos</button>
+                <button data-category="lanches" class="filter-btn bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full text-xs">Lanches</button>
+                <button data-category="bebidas_quentes" class="filter-btn bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full text-xs">Bebidas Quentes</button>
+                <button data-category="bebidas_frias" class="filter-btn bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full text-xs">Bebidas Frias</button>
+                <button data-category="drinks" class="filter-btn bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full text-xs">Drinks</button>
+                <button data-category="aperitivos" class="filter-btn bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full text-xs">Aperitivos</button>
+                <button data-category="especiais" class="filter-btn bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full text-xs">Especiais</button>
+                <button data-category="combos" class="filter-btn bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full text-xs">Combos</button>
+            </div>
+        </div>
+        <div class="mt-6">
+            <h3 id="cartTitle" class="text-lg font-semibold mb-4 text-yellow-300 flex items-center">
+                🧾 Seu Pedido
+            </h3>
+            <div id="cartItems" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                <p class="text-gray-400 text-sm text-center py-4">Seu carrinho está vazio</p>
+            </div>
+            <div id="cartTotal" class="hidden mt-4 pt-4 border-t border-red-500/20">
+                <div class="flex justify-between items-center font-bold text-lg">
+                    <span id="totalLabel">Total:</span>
+                    <span id="totalAmount" class="text-yellow-400">R$ 0,00</span>
+                </div>
+                <div class="grid grid-cols-1 gap-2 mt-3">
+                    <button id="pickupBtn" class="bg-gradient-to-r from-red-600 to-red-700 py-2 rounded-lg font-semibold hover:shadow-lg transition-all">
+                        Retirar no Local
+                    </button>
+                    <button id="deliveryBtnCart" class="bg-gradient-to-r from-yellow-500 to-yellow-600 py-2 rounded-lg font-semibold text-black hover:shadow-lg transition-all">
+                        Delivery
+                    </button>
+                    <button id="tableBtn" class="bg-gradient-to-r from-blue-600 to-purple-600 py-2 rounded-lg font-semibold hover:shadow-lg transition-all">
+                        Atendimento na Mesa
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="contact-section" class="mt-8 pt-6 border-t border-red-500/20"></div>
+    </aside>
+    <!-- Botão de toggle para mobile -->
+    <button id="sidebarToggle">➤</button>
+    <!-- Header -->
+    <header>
+        <h2 id="currentProduct" class="text-lg font-semibold text-center flex-1">Navegue pela hélice</h2>
+        <div class="flex items-center gap-2">
+            <div class="relative" id="languageSelector">
+                <button id="langToggle" class="px-2 py-1 bg-blue-600 text-white rounded text-xs font-bold">
+                    PT
+                </button>
+                <div id="langDropdown" class="absolute top-full mt-1 w-32 bg-gray-800 border border-red-500/30 rounded shadow-lg overflow-hidden hidden z-50">
+                    <div class="flex flex-col text-xs" id="langDropdownContent">
+                        <button data-lang="pt" class="px-3 py-1 hover:bg-gray-700 text-white">🇧🇷 PT</button>
+                        <button data-lang="en" class="px-3 py-1 hover:bg-gray-700 text-white">🇺🇸 EN</button>
+                        <button data-lang="es" class="px-3 py-1 hover:bg-gray-700 text-white">🇪🇸 ES</button>
+                        <button data-lang="de" class="px-3 py-1 hover:bg-gray-700 text-white">🇩🇪 DE</button>
+                        <button data-lang="fr" class="px-3 py-1 hover:bg-gray-700 text-white">🇫🇷 FR</button>
+                        <button data-lang="ja" class="px-3 py-1 hover:bg-gray-700 text-white">🇯🇵 JA</button>
+                        <button data-lang="zh-TW" class="px-3 py-1 hover:bg-gray-700 text-white">🇨🇳 中文</button>
+                    </div>
+                </div>
+            </div>
+            <button id="cartButton" class="bg-gradient-to-r from-red-500 to-yellow-400 px-3 py-1 rounded font-medium flex items-center gap-1 text-sm">
+                🛒 <span id="cartCount">0</span>
+            </button>
+        </div>
+    </header>
+    <!-- Canvas do cardápio -->
+    <div id="canvas-container"></div>
+    <!-- Controles mobile -->
+    <div class="controls">
+        <button class="btn" id="prevBtn">⬅ Anterior</button>
+        <button class="btn" id="nextBtn">Próximo ➡</button>
+    </div>
+    <!-- Modais -->
+    <div id="addItemModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+        <div class="bg-gray-900 border border-red-500/30 backdrop-blur-sm rounded-2xl p-6 max-w-md mx-4 text-white transform scale-95 opacity-0 transition-all duration-300" id="modalContent">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-gradient-to-r from-red-600 to-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                    ✅
+                </div>
+                <h3 id="modalTitle" class="text-2xl font-bold mb-2">Adicionado!</h3>
+                <p id="modalItemName" class="mb-6 text-gray-300">Foi para o seu carrinho.</p>
+                <div class="flex space-x-3">
+                    <button id="continueShopping" class="flex-1 bg-gray-800 hover:bg-gray-700 py-2 rounded-lg font-semibold">
+                        Continuar
+                    </button>
+                    <button id="goToCart" class="flex-1 bg-gradient-to-r from-red-600 to-yellow-400 text-white py-2 rounded-lg font-semibold">
+                        Ver Carrinho
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="customizeModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+        <div class="bg-gray-900 border border-red-500/30 backdrop-blur-sm rounded-2xl p-6 max-w-lg mx-4 text-white transform scale-95 opacity-0 transition-all duration-300" id="customizeContent">
+            <h3 id="customizeTitle" class="text-2xl font-bold mb-4"></h3>
+            <div class="mb-6">
+                <h4 id="removeLabel" class="font-semibold mb-2">Remover ingredientes:</h4>
+                <div id="ingredientsList" class="space-y-2 max-h-32 overflow-y-auto"></div>
+            </div>
+            <div class="mb-6">
+                <h4 id="addLabel" class="font-semibold mb-2">Adicionar extras (+):</h4>
+                <div id="extrasList" class="space-y-2 max-h-32 overflow-y-auto"></div>
+            </div>
+            <div class="mb-6">
+                <label for="customObservation" class="block text-sm mb-1" id="obsLabel">Observações:</label>
+                <input type="text" id="customObservation" class="w-full p-2 bg-gray-800 rounded border border-gray-600 text-white text-sm" placeholder="" />
+            </div>
+            <div class="flex space-x-3">
+                <button id="cancelCustomize" class="flex-1 bg-gray-800 hover:bg-gray-700 py-2 rounded-lg font-semibold">
+                    Cancelar
+                </button>
+                <button id="addToCartCustom" class="flex-1 bg-gradient-to-r from-green-600 to-blue-600 py-2 rounded-lg font-semibold">
+                    Adicionar
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Modal Mesa -->
+    <div id="tableModal" class="modal">
+        <div class="modal-content">
+            <h3>📍 Número da Mesa</h3>
+            <input type="text" id="tableNumberInput" placeholder="Ex: 5" maxlength="10" />
+            <div id="tableError" class="error"></div>
+            <div class="modal-buttons">
+                <button class="cancel" id="cancelTable">Cancelar</button>
+                <button class="confirm" id="sendTableOrder">Enviar Pedido à Cozinha</button>
+            </div>
+        </div>
+    </div>
+    <!-- Modal Delivery -->
+    <div id="deliveryModal" class="modal">
+        <div class="modal-content">
+            <h3>🏠 Seu Endereço</h3>
+            <input type="text" id="streetInput" placeholder="Rua" />
+            <input type="text" id="numberInput" placeholder="Número" maxlength="10" />
+            <input type="text" id="cepInput" placeholder="CEP" maxlength="9" />
+            <div id="deliveryError" class="error"></div>
+            <div class="modal-buttons">
+                <button class="cancel" id="cancelDelivery">Cancelar</button>
+                <button class="confirm" id="sendDeliveryOrder">Enviar Pedido à Cozinha</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // === Configuração do Restaurante ===
+        const restaurantConfig = {
+            name: "Helix Menu",
+            address: "Rua dos Hot Dogs, 123",
+            phone: "(11) 99999-9999",
+            whatsapp: "5511911324392",
+            email: "contato@mirimdog.com.br",
+            hours: {
+                monday: { open: "10:00", close: "22:00" },
+                tueToFri: { open: "10:00", close: "22:00" },
+                saturday: { open: "09:00", close: "23:00", color: "text-blue-400" },
+                sundayHoliday: { open: "11:00", close: "21:00", color: "text-purple-400" }
+            },
+            specialNotice: "Horário pode variar em feriados. Confirme pelo WhatsApp!"
+        };
+        // === Traduções das categorias ===
+        const categoryTranslations = {
+            pt: { all: "Todos", lanches: "Lanches", bebidas_quentes: "Bebidas Quentes", bebidas_frias: "Bebidas Frias", drinks: "Drinks", aperitivos: "Aperitivos", especiais: "Especiais", combos: "Combos" },
+            en: { all: "All", lanches: "Snacks", bebidas_quentes: "Hot Drinks", bebidas_frias: "Cold Drinks", drinks: "Drinks", aperitivos: "Appetizers", especiais: "Specials", combos: "Combos" },
+            es: { all: "Todos", lanches: "Snacks", bebidas_quentes: "Bebidas Calientes", bebidas_frias: "Bebidas Frías", drinks: "Tragos", aperitivos: "Aperitivos", especiais: "Especiales", combos: "Combos" },
+            de: { all: "Alle", lanches: "Snacks", bebidas_quentes: "Heiße Getränke", bebidas_frias: "Kalte Getränke", drinks: "Cocktails", aperitivos: "Vorspeisen", especiais: "Spezialitäten", combos: "Kombos" },
+            fr: { all: "Tous", lanches: "Snacks", bebidas_quentes: "Boissons Chaudes", bebidas_frias: "Boissons Froides", drinks: "Cocktails", aperitivos: "Entrées", especiais: "Spéciaux", combos: "Combos" },
+            ja: { all: "すべて", lanches: "スナック", bebidas_quentes: "ホットドリンク", bebidas_frias: "コールドドリンク", drinks: "ドリンク", aperitivos: "前菜", especiais: "スペシャル", combos: "コンボ" },
+            "zh-TW": { all: "全部", lanches: "小食", bebidas_quentes: "熱飲", bebidas_frias: "冷飲", drinks: "酒精飲料", aperitivos: "開胃菜", especiais: "特色菜", combos: "套餐" }
+        };
+        const languages = {
+            pt: {
+                cartTitle: "🧾 Seu Pedido",
+                cartEmpty: "Seu carrinho está vazio",
+                total: "Total:",
+                contactTitle: "📞 Contato",
+                hoursTitle: "🕒 Horários & Contato",
+                address: "📍 Rua dos Hot Dogs, 123",
+                phone: "📱 (11) 99999-9999",
+                email: "✉️ contato@mirimdog.com.br",
+                specialNotice: "⚠️ Horário pode variar em feriados. Confirme pelo WhatsApp!",
+                openNow: "🟢 ABERTO AGORA",
+                closed: "🔴 FECHADO",
+                monday: "Segunda",
+                tueToFri: "Terça a Sexta",
+                saturday: "Sábado",
+                sundayHoliday: "Domingo/Feriados",
+                pickup: "Retirar no Local",
+                delivery: "Delivery",
+                table: "Atendimento na Mesa",
+                addToCart: "Adicionado!",
+                continueShopping: "Continuar",
+                viewCart: "Ver Carrinho",
+                productNav: "Navegue pela hélice",
+                cartButton: "🛒 <span id='cartCount'>0</span>",
+                modalAdded: "foi adicionado ao seu carrinho.",
+                orderTypes: { Delivery: "DELIVERY", Retirada: "RETIRADA", Mesa: "MESA" },
+                whatsappMessages: {
+                    introMesa: "🍽️ *NOVO PEDIDO – MESA*\n",
+                    introDelivery: "🚚 *NOVO PEDIDO – DELIVERY*\n",
+                    introRetirada: "🛍️ *NOVO PEDIDO – RETIRADA*\n",
+                    tablePrompt: "\n📍 *Mesa:* ",
+                    paymentPrompt: "\n💳 *Forma de pagamento?*\n1: Pix\n2: Crédito\n3: Débito\n4: Dinheiro\n(Digite o número correspondente)",
+                    addressPrompt: "\n🏠 *Endereço:* "
+                },
+                removeLabel: "Remover ingredientes:",
+                addLabel: "Adicionar extras (+):",
+                obsLabel: "Observações:",
+                obsPlaceholder: "Ex: sem tomate, molho à parte",
+                removed: "Removido",
+                added: "Adicionado",
+                observationLabel: "Obs"
+            },
+            en: {
+                cartTitle: "🧾 Your Order",
+                cartEmpty: "Your cart is empty",
+                total: "Total:",
+                contactTitle: "📞 Contact",
+                hoursTitle: "🕒 Hours & Contact",
+                address: "📍 Hot Dog Street, 123",
+                phone: "📱 (11) 99999-9999",
+                email: "✉️ contato@mirimdog.com.br",
+                specialNotice: "⚠️ Hours may vary on holidays. Confirm via WhatsApp!",
+                openNow: "🟢 OPEN NOW",
+                closed: "🔴 CLOSED",
+                monday: "Monday",
+                tueToFri: "Tue to Fri",
+                saturday: "Saturday",
+                sundayHoliday: "Sunday/Holidays",
+                pickup: "Pickup",
+                delivery: "Delivery",
+                table: "Table Service",
+                addToCart: "Added!",
+                continueShopping: "Continue",
+                viewCart: "View Cart",
+                productNav: "Navigate the helix",
+                cartButton: "🛒 <span id='cartCount'>0</span>",
+                modalAdded: "was added to your cart.",
+                orderTypes: { Delivery: "DELIVERY", Retirada: "PICKUP", Mesa: "TABLE" },
+                whatsappMessages: {
+                    introMesa: "🍽️ *NEW ORDER – TABLE*\n",
+                    introDelivery: "🚚 *NEW ORDER – DELIVERY*\n",
+                    introRetirada: "🛍️ *NEW ORDER – PICKUP*\n",
+                    tablePrompt: "\n📍 *Table:* ",
+                    paymentPrompt: "\n💳 *Payment method?*\n1: Pix\n2: Credit\n3: Debit\n4: Cash\n(Type the corresponding number)",
+                    addressPrompt: "\n🏠 *Address:* "
+                },
+                removeLabel: "Remove ingredients:",
+                addLabel: "Add extras (+):",
+                obsLabel: "Notes:",
+                obsPlaceholder: "Ex: no tomato, sauce on the side",
+                removed: "Removed",
+                added: "Added",
+                observationLabel: "Note"
+            },
+            es: {
+                cartTitle: "🧾 Tu Pedido",
+                cartEmpty: "Tu carrito está vacío",
+                total: "Total:",
+                contactTitle: "📞 Contacto",
+                hoursTitle: "🕒 Horarios & Contacto",
+                address: "📍 Calle Hot Dogs, 123",
+                phone: "📱 (11) 99999-9999",
+                email: "✉️ contato@mirimdog.com.br",
+                specialNotice: "⚠️ El horario puede variar en días festivos. Confirma por WhatsApp.",
+                openNow: "🟢 ABIERTO AHORA",
+                closed: "🔴 CERRADO",
+                monday: "Lunes",
+                tueToFri: "Mar a Vie",
+                saturday: "Sábado",
+                sundayHoliday: "Dom/Feriados",
+                pickup: "Recoger en Local",
+                delivery: "Delivery",
+                table: "Servicio en Mesa",
+                addToCart: "¡Añadido!",
+                continueShopping: "Continuar",
+                viewCart: "Ver Carrito",
+                productNav: "Navega por la hélice",
+                cartButton: "🛒 <span id='cartCount'>0</span>",
+                modalAdded: "fue añadido a tu carrito.",
+                orderTypes: { Delivery: "DELIVERY", Retirada: "RECOGER", Mesa: "MESA" },
+                whatsappMessages: {
+                    introMesa: "🍽️ *NUEVO PEDIDO – MESA*\n",
+                    introDelivery: "🚚 *NUEVO PEDIDO – DELIVERY*\n",
+                    introRetirada: "🛍️ *NUEVO PEDIDO – RECOGER*\n",
+                    tablePrompt: "\n📍 *Mesa:* ",
+                    paymentPrompt: "\n💳 *¿Forma de pago?*\n1: Pix\n2: Crédito\n3: Débito\n4: Efectivo\n(Escribe el número correspondiente)",
+                    addressPrompt: "\n🏠 *Dirección:* "
+                },
+                removeLabel: "Eliminar ingredientes:",
+                addLabel: "Agregar extras (+):",
+                obsLabel: "Notas:",
+                obsPlaceholder: "Ej: sin tomate, salsa aparte",
+                removed: "Eliminado",
+                added: "Agregado",
+                observationLabel: "Nota"
+            },
+            de: {
+                cartTitle: "🧾 Ihre Bestellung",
+                cartEmpty: "Ihr Warenkorb ist leer",
+                total: "Gesamt:",
+                contactTitle: "📞 Kontakt",
+                hoursTitle: "🕒 Öffnungszeiten & Kontakt",
+                address: "📍 Hot Dog Straße, 123",
+                phone: "📱 (11) 99999-9999",
+                email: "✉️ contato@mirimdog.com.br",
+                specialNotice: "⚠️ Die Öffnungszeiten können an Feiertagen variieren. Bestätigen Sie bitte per WhatsApp!",
+                openNow: "🟢 JETZT OFFEN",
+                closed: "🔴 GESCHLOSSEN",
+                monday: "Montag",
+                tueToFri: "Di bis Fr",
+                saturday: "Samstag",
+                sundayHoliday: "So/Feiertage",
+                pickup: "Abholung",
+                delivery: "Lieferung",
+                table: "Tischservice",
+                addToCart: "Hinzugefügt!",
+                continueShopping: "Weiter einkaufen",
+                viewCart: "Warenkorb ansehen",
+                productNav: "Navigieren Sie durch die Helix",
+                cartButton: "🛒 <span id='cartCount'>0</span>",
+                modalAdded: "wurde Ihrem Warenkorb hinzugefügt.",
+                orderTypes: { Delivery: "LIEFERUNG", Retirada: "ABHOLUNG", Mesa: "TISCH" },
+                whatsappMessages: {
+                    introMesa: "🍽️ *NEUE BESTELLUNG – TISCH*\n",
+                    introDelivery: "🚚 *NEUE BESTELLUNG – LIEFERUNG*\n",
+                    introRetirada: "🛍️ *NEUE BESTELLUNG – ABHOLUNG*\n",
+                    tablePrompt: "\n📍 *Tisch:* ",
+                    paymentPrompt: "\n💳 *Zahlungsmethode?*\n1: Pix\n2: Kreditkarte\n3: Debitkarte\n4: Bargeld\n(Geben Sie die entsprechende Zahl ein)",
+                    addressPrompt: "\n🏠 *Adresse:* "
+                },
+                removeLabel: "Zutaten entfernen:",
+                addLabel: "Extras hinzufügen (+):",
+                obsLabel: "Hinweise:",
+                obsPlaceholder: "Z. B.: ohne Tomate, Sauce extra",
+                removed: "Entfernt",
+                added: "Hinzugefügt",
+                observationLabel: "Hinweis"
+            },
+            fr: {
+                cartTitle: "🧾 Votre Commande",
+                cartEmpty: "Votre panier est vide",
+                total: "Total :",
+                contactTitle: "📞 Contact",
+                hoursTitle: "🕒 Horaires & Contact",
+                address: "📍 Rue des Hot Dogs, 123",
+                phone: "📱 (11) 99999-9999",
+                email: "✉️ contato@mirimdog.com.br",
+                specialNotice: "⚠️ Les horaires peuvent varier les jours fériés. Confirmez par WhatsApp !",
+                openNow: "🟢 OUVERT MAINTENANT",
+                closed: "🔴 FERMÉ",
+                monday: "Lundi",
+                tueToFri: "Mar au Ven",
+                saturday: "Samedi",
+                sundayHoliday: "Dim/Fériés",
+                pickup: "À emporter",
+                delivery: "Livraison",
+                table: "Service à table",
+                addToCart: "Ajouté !",
+                continueShopping: "Continuer",
+                viewCart: "Voir le panier",
+                productNav: "Parcourez la spirale",
+                cartButton: "🛒 <span id='cartCount'>0</span>",
+                modalAdded: "a été ajouté à votre panier.",
+                orderTypes: { Delivery: "LIVRAISON", Retirada: "À EMPORTER", Mesa: "TABLE" },
+                whatsappMessages: {
+                    introMesa: "🍽️ *NOUVELLE COMMANDE – TABLE*\n",
+                    introDelivery: "🚚 *NOUVELLE COMMANDE – LIVRAISON*\n",
+                    introRetirada: "🛍️ *NOUVELLE COMMANDE – À EMPORTER*\n",
+                    tablePrompt: "\n📍 *Table:* ",
+                    paymentPrompt: "\n💳 *Mode de paiement ?*\n1: Pix\n2: Carte de crédit\n3: Carte de débit\n4: Espèces\n(Saisissez le numéro correspondant)",
+                    addressPrompt: "\n🏠 *Adresse:* "
+                },
+                removeLabel: "Supprimer des ingrédients :",
+                addLabel: "Ajouter des extras (+) :",
+                obsLabel: "Remarques :",
+                obsPlaceholder: "Ex. : sans tomate, sauce à part",
+                removed: "Supprimé",
+                added: "Ajouté",
+                observationLabel: "Note"
+            },
+            ja: {
+                cartTitle: "🧾 ご注文内容",
+                cartEmpty: "カートは空です",
+                total: "合計:",
+                contactTitle: "📞 お問い合わせ",
+                hoursTitle: "🕒 営業時間 & 連絡先",
+                address: "📍 ホットドッグ通り 123",
+                phone: "📱 (11) 99999-9999",
+                email: "✉️ contato@mirimdog.com.br",
+                specialNotice: "⚠️ 祝日は営業時間が変更になる場合があります。WhatsAppでご確認ください！",
+                openNow: "🟢 現在営業中",
+                closed: "🔴 休業中",
+                monday: "月曜日",
+                tueToFri: "火～金",
+                saturday: "土曜日",
+                sundayHoliday: "日・祝日",
+                pickup: "店頭受け取り",
+                delivery: "配達",
+                table: "テーブル注文",
+                addToCart: "追加しました！",
+                continueShopping: "続ける",
+                viewCart: "カートを見る",
+                productNav: "スパイラルをナビゲート",
+                cartButton: "🛒 <span id='cartCount'>0</span>",
+                modalAdded: "がカートに追加されました。",
+                orderTypes: { Delivery: "配達", Retirada: "受け取り", Mesa: "テーブル" },
+                whatsappMessages: {
+                    introMesa: "🍽️ *新規注文 – テーブル*\n",
+                    introDelivery: "🚚 *新規注文 – 配達*\n",
+                    introRetirada: "🛍️ *新規注文 – 受け取り*\n",
+                    tablePrompt: "\n📍 *テーブル番号:* ",
+                    paymentPrompt: "\n💳 *お支払い方法は？*\n1: Pix\n2: クレジット\n3: デビット\n4: 現金\n(対応する数字を入力)",
+                    addressPrompt: "\n🏠 *住所:* "
+                },
+                removeLabel: "削除する材料:",
+                addLabel: "追加オプション (+):",
+                obsLabel: "備考:",
+                obsPlaceholder: "例: トマト抜き、ソース別添え",
+                removed: "削除済み",
+                added: "追加済み",
+                observationLabel: "備考"
+            },
+            "zh-TW": {
+                cartTitle: "🧾 您的訂單",
+                cartEmpty: "您的購物車是空的",
+                total: "總計：",
+                contactTitle: "📞 聯絡我們",
+                hoursTitle: "🕒 營業時間 & 聯絡方式",
+                address: "📍 熱狗街 123 號",
+                phone: "📱 (11) 99999-9999",
+                email: "✉️ contato@mirimdog.com.br",
+                specialNotice: "⚠️ 假日營業時間可能變動，請透過 WhatsApp 確認！",
+                openNow: "🟢 現在營業中",
+                closed: "🔴 休息中",
+                monday: "週一",
+                tueToFri: "週二至週五",
+                saturday: "週六",
+                sundayHoliday: "週日/假日",
+                pickup: "到店取餐",
+                delivery: "外送",
+                table: "內用點餐",
+                addToCart: "已加入！",
+                continueShopping: "繼續選購",
+                viewCart: "查看購物車",
+                productNav: "瀏覽螺旋選單",
+                cartButton: "🛒 <span id='cartCount'>0</span>",
+                modalAdded: "已加入您的購物車。",
+                orderTypes: { Delivery: "外送", Retirada: "取餐", Mesa: "內用" },
+                whatsappMessages: {
+                    introMesa: "🍽️ *新訂單 – 內用*\n",
+                    introDelivery: "🚚 *新訂單 – 外送*\n",
+                    introRetirada: "🛍️ *新訂單 – 取餐*\n",
+                    tablePrompt: "\n📍 *桌號:* ",
+                    paymentPrompt: "\n💳 *付款方式？*\n1: Pix\n2: 信用卡\n3: 金融卡\n4: 現金\n(請輸入對應數字)",
+                    addressPrompt: "\n🏠 *地址:* "
+                },
+                removeLabel: "移除食材：",
+                addLabel: "額外加購 (+)：",
+                obsLabel: "備註：",
+                obsPlaceholder: "例：不要番茄、醬料分開",
+                removed: "已移除",
+                added: "已加購",
+                observationLabel: "備註"
+            }
+        };
+        let currentLang = 'pt';
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        const menuData = [
+    {
+        id: 1,
+        name: { pt: 'Missô Kazu Lamen', en: 'Missô Kazu Lamen', es: 'Missô Kazu Lamen', de: 'Missô Kazu Lamen', fr: 'Missô Kazu Lamen', ja: '味噌風味 八洲ラーメン', "zh-TW": '味噌風味 八洲拉麵' },
+        price: 75.50,
+        dnaColor: '#8B4513',
+        imageData: 'images/misso kazu lamen.jpeg', // Substitua pelo caminho real da imagem
+        category: 'lamen',
+        ingredients: {
+            pt: ['Caldo de missô', 'menma', 'shiraga negui', 'cebolinha', 'nori', 'ovo', 'chashu picado'],
+            en: ['Miso broth', 'menma', 'shiraga negui', 'green onion', 'nori', 'egg', 'diced chashu'],
+            es: ['Caldo de miso', 'menma', 'shiraga negui', 'cebollino', 'nori', 'huevo', 'chashu picado'],
+            de: ['Miso-Brühe', 'Menma', 'Shiraga Negui', 'Lauch', 'Nori', 'Ei', 'gewürfeltes Chashu'],
+            fr: ['Bouillon de miso', 'menma', 'shiraga negui', 'oignon vert', 'nori', 'œuf', 'chashu haché'],
+            ja: ['味噌スープ', 'メンマ', '白髪ネギ', 'ねぎ', 'のり', '卵', '細切れチャーシュー'],
+            "zh-TW": ['味噌湯頭', '筍乾', '白髮蔥', '蔥花', '海苔', '蛋', '切丁叉燒']
+        },
+        extras: [
+            { name: { pt: 'Ovo extra', en: 'Extra egg', es: 'Huevo extra', de: 'Extra Ei', fr: 'Œuf supplémentaire', ja: '卵追加', "zh-TW": '加蛋' }, price: 6.00 },
+            { name: { pt: 'Chashu extra', en: 'Extra chashu', es: 'Chashu extra', de: 'Extra Chashu', fr: 'Chashu supplémentaire', ja: 'チャーシュー追加', "zh-TW": '加叉燒' }, price: 8.20 }
+        ]
+    },
+    {
+        id: 2,
+        name: { pt: 'Missô Chashu Lamen', en: 'Missô Chashu Lamen', es: 'Missô Chashu Lamen', de: 'Missô Chashu Lamen', fr: 'Missô Chashu Lamen', ja: '味噌風味 叉焼ラーメン', "zh-TW": '味噌風味 叉燒拉麵' },
+        price: 61.70,
+        dnaColor: '#8B4513',
+        imageData: 'images/misso chashu lamen.jpeg',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Caldo de missô', 'menma', 'moyashi', 'algas marinhas', 'chashu', 'gergelim'],
+            en: ['Miso broth', 'menma', 'moyashi', 'seaweed', 'chashu', 'sesame'],
+            es: ['Caldo de miso', 'menma', 'brotes', 'algas marinas', 'chashu', 'sésamo'],
+            de: ['Miso-Brühe', 'Menma', 'Sprossen', 'Seetang', 'Chashu', 'Sesam'],
+            fr: ['Bouillon de miso', 'menma', 'germes de soja', 'algues', 'chashu', 'sésame'],
+            ja: ['味噌スープ', 'メンマ', 'もやし', '海藻', 'チャーシュー', 'ごま'],
+            "zh-TW": ['味噌湯頭', '筍乾', '豆芽菜', '海藻', '叉燒', '芝麻']
+        },
+        extras: [
+            { name: { pt: 'Ovo extra', en: 'Extra egg', es: 'Huevo extra', de: 'Extra Ei', fr: 'Œuf supplémentaire', ja: '卵追加', "zh-TW": '加蛋' }, price: 6.00 },
+            { name: { pt: 'Chashu extra', en: 'Extra chashu', es: 'Chashu extra', de: 'Extra Chashu', fr: 'Chashu supplémentaire', ja: 'チャーシュー追加', "zh-TW": '加叉燒' }, price: 8.20 }
+        ]
+    },
+    {
+        id: 3,
+        name: { pt: 'Missô Yasai Lamen', en: 'Missô Yasai Lamen', es: 'Missô Yasai Lamen', de: 'Missô Yasai Lamen', fr: 'Missô Yasai Lamen', ja: '味噌風味 野菜ラーメン', "zh-TW": '味噌風味 蔬菜拉麵' },
+        price: 66.50,
+        dnaColor: '#8B4513',
+        imageData: 'images/misso yasai lamen.jpeg',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Caldo de missô', 'repolho', 'cenoura', 'cebola refogados', 'menma', 'moyashi', 'algas marinhas', 'nori', 'cebolinha', 'gergelim'],
+            en: ['Miso broth', 'stir-fried cabbage, carrot, onion', 'menma', 'moyashi', 'seaweed', 'nori', 'green onion', 'sesame'],
+            es: ['Caldo de miso', 'repollo, zanahoria, cebolla salteados', 'menma', 'brotes', 'algas marinas', 'nori', 'cebollino', 'sésamo'],
+            de: ['Miso-Brühe', 'gebratener Kohl, Karotte, Zwiebel', 'Menma', 'Sprossen', 'Seetang', 'Nori', 'Lauch', 'Sesam'],
+            fr: ['Bouillon de miso', 'chou, carotte, oignon sautés', 'menma', 'germes de soja', 'algues', 'nori', 'oignon vert', 'sésame'],
+            ja: ['味噌スープ', '炒めたキャベツ、にんじん、玉ねぎ', 'メンマ', 'もやし', '海藻', 'のり', 'ねぎ', 'ごま'],
+            "zh-TW": ['味噌湯頭', '炒高麗菜、胡蘿蔔、洋蔥', '筍乾', '豆芽菜', '海藻', '海苔', '蔥花', '芝麻']
+        },
+        extras: [
+            { name: { pt: 'Ovo extra', en: 'Extra egg', es: 'Huevo extra', de: 'Extra Ei', fr: 'Œuf supplémentaire', ja: '卵追加', "zh-TW": '加蛋' }, price: 6.00 },
+            { name: { pt: 'Chashu extra', en: 'Extra chashu', es: 'Chashu extra', de: 'Extra Chashu', fr: 'Chashu supplémentaire', ja: 'チャーシュー追加', "zh-TW": '加叉燒' }, price: 8.20 }
+        ]
+    },
+    {
+        id: 4,
+        name: { pt: 'Missô Lamen Tradicional', en: 'Missô Lamen Traditional', es: 'Missô Lamen Tradicional', de: 'Missô Lamen Traditionell', fr: 'Missô Lamen Traditionnel', ja: '味噌風味 伝統ラーメン', "zh-TW": '味噌風味 傳統拉麵' },
+        price: 53.50,
+        dnaColor: '#8B4513',
+        imageData: 'images/misso lamen tradicional.jpeg',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Caldo de missô', '7 toppings: menma, moyashi, algas marinhas, chashu, gergelim'],
+            en: ['Miso broth', '7 toppings: menma, moyashi, seaweed, chashu, sesame'],
+            es: ['Caldo de miso', '7 toppings: menma, brotes, algas marinas, chashu, sésamo'],
+            de: ['Miso-Brühe', '7 Toppings: Menma, Sprossen, Seetang, Chashu, Sesam'],
+            fr: ['Bouillon de miso', '7 toppings : menma, germes de soja, algues, chashu, sésame'],
+            ja: ['味噌スープ', '7つのトッピング: メンマ、もやし、海藻、チャーシュー、ごま'],
+            "zh-TW": ['味噌湯頭', '7種配料：筍乾、豆芽菜、海藻、叉燒、芝麻']
+        },
+        extras: [
+            { name: { pt: 'Ovo extra', en: 'Extra egg', es: 'Huevo extra', de: 'Extra Ei', fr: 'Œuf supplémentaire', ja: '卵追加', "zh-TW": '加蛋' }, price: 6.00 },
+            { name: { pt: 'Chashu extra', en: 'Extra chashu', es: 'Chashu extra', de: 'Extra Chashu', fr: 'Chashu supplémentaire', ja: 'チャーシュー追加', "zh-TW": '加叉燒' }, price: 8.20 }
+        ]
+    },
+    {
+        id: 5,
+        name: { pt: 'Shoyu Yasai Lamen', en: 'Shoyu Yasai Lamen', es: 'Shoyu Yasai Lamen', de: 'Shoyu Yasai Lamen', fr: 'Shoyu Yasai Lamen', ja: '醤油風味 野菜ラーメン', "zh-TW": '醬油風味 蔬菜拉麵' },
+        price: 63.20,
+        dnaColor: '#D2691E',
+        imageData: 'images/item_5.webp',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Caldo de shoyu', 'repolho', 'cenoura', 'cebola refogados', 'menma', 'moyashi', 'algas marinhas', 'nori', 'cebolinha', 'gergelim'],
+            en: ['Shoyu broth', 'stir-fried cabbage, carrot, onion', 'menma', 'moyashi', 'seaweed', 'nori', 'green onion', 'sesame'],
+            es: ['Caldo de shoyu', 'repollo, zanahoria, cebolla salteados', 'menma', 'brotes', 'algas marinas', 'nori', 'cebollino', 'sésamo'],
+            de: ['Shoyu-Brühe', 'gebratener Kohl, Karotte, Zwiebel', 'Menma', 'Sprossen', 'Seetang', 'Nori', 'Lauch', 'Sesam'],
+            fr: ['Bouillon de shoyu', 'chou, carotte, oignon sautés', 'menma', 'germes de soja', 'algues', 'nori', 'oignon vert', 'sésame'],
+            ja: ['醤油スープ', '炒めたキャベツ、にんじん、玉ねぎ', 'メンマ', 'もやし', '海藻', 'のり', 'ねぎ', 'ごま'],
+            "zh-TW": ['醬油湯頭', '炒高麗菜、胡蘿蔔、洋蔥', '筍乾', '豆芽菜', '海藻', '海苔', '蔥花', '芝麻']
+        },
+        extras: [
+            { name: { pt: 'Ovo extra', en: 'Extra egg', es: 'Huevo extra', de: 'Extra Ei', fr: 'Œuf supplémentaire', ja: '卵追加', "zh-TW": '加蛋' }, price: 6.00 },
+            { name: { pt: 'Chashu extra', en: 'Extra chashu', es: 'Chashu extra', de: 'Extra Chashu', fr: 'Chashu supplémentaire', ja: 'チャーシュー追加', "zh-TW": '加叉燒' }, price: 8.20 }
+        ]
+    },
+    {
+        id: 6,
+        name: { pt: 'Shio Yasai Lamen', en: 'Shio Yasai Lamen', es: 'Shio Yasai Lamen', de: 'Shio Yasai Lamen', fr: 'Shio Yasai Lamen', ja: '塩風味 野菜ラーメン', "zh-TW": '鹽味風味 蔬菜拉麵' },
+        price: 62.00,
+        dnaColor: '#ADD8E6',
+        imageData: 'images/item_6.webp',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Caldo de sal', 'repolho', 'cenoura', 'cebola refogados', 'menma', 'moyashi', 'algas marinhas', 'nori', 'cebolinha', 'gergelim'],
+            en: ['Salt broth', 'stir-fried cabbage, carrot, onion', 'menma', 'moyashi', 'seaweed', 'nori', 'green onion', 'sesame'],
+            es: ['Caldo de sal', 'repollo, zanahoria, cebolla salteados', 'menma', 'brotes', 'algas marinas', 'nori', 'cebollino', 'sésamo'],
+            de: ['Salzbrühe', 'gebratener Kohl, Karotte, Zwiebel', 'Menma', 'Sprossen', 'Seetang', 'Nori', 'Lauch', 'Sesam'],
+            fr: ['Bouillon salé', 'chou, carotte, oignon sautés', 'menma', 'germes de soja', 'algues', 'nori', 'oignon vert', 'sésame'],
+            ja: ['塩スープ', '炒めたキャベツ、にんじん、玉ねぎ', 'メンマ', 'もやし', '海藻', 'のり', 'ねぎ', 'ごま'],
+            "zh-TW": ['鹽味湯頭', '炒高麗菜、胡蘿蔔、洋蔥', '筍乾', '豆芽菜', '海藻', '海苔', '蔥花', '芝麻']
+        },
+        extras: [
+            { name: { pt: 'Ovo extra', en: 'Extra egg', es: 'Huevo extra', de: 'Extra Ei', fr: 'Œuf supplémentaire', ja: '卵追加', "zh-TW": '加蛋' }, price: 6.00 },
+            { name: { pt: 'Chashu extra', en: 'Extra chashu', es: 'Chashu extra', de: 'Extra Chashu', fr: 'Chashu supplémentaire', ja: 'チャーシュー追加', "zh-TW": '加叉燒' }, price: 8.20 }
+        ]
+    },
+    {
+        id: 7,
+        name: { pt: 'Shoyu Chashu Lamen', en: 'Shoyu Chashu Lamen', es: 'Shoyu Chashu Lamen', de: 'Shoyu Chashu Lamen', fr: 'Shoyu Chashu Lamen', ja: '醤油風味 叉焼ラーメン', "zh-TW": '醬油風味 叉燒拉麵' },
+        price: 58.40,
+        dnaColor: '#D2691E',
+        imageData: 'images/item_7.webp',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Caldo de shoyu', 'menma', 'moyashi', 'algas marinhas', 'chashu', 'gergelim'],
+            en: ['Shoyu broth', 'menma', 'moyashi', 'seaweed', 'chashu', 'sesame'],
+            es: ['Caldo de shoyu', 'menma', 'brotes', 'algas marinas', 'chashu', 'sésamo'],
+            de: ['Shoyu-Brühe', 'Menma', 'Sprossen', 'Seetang', 'Chashu', 'Sesam'],
+            fr: ['Bouillon de shoyu', 'menma', 'germes de soja', 'algues', 'chashu', 'sésame'],
+            ja: ['醤油スープ', 'メンマ', 'もやし', '海藻', 'チャーシュー', 'ごま'],
+            "zh-TW": ['醬油湯頭', '筍乾', '豆芽菜', '海藻', '叉燒', '芝麻']
+        },
+        extras: [
+            { name: { pt: 'Ovo extra', en: 'Extra egg', es: 'Huevo extra', de: 'Extra Ei', fr: 'Œuf supplémentaire', ja: '卵追加', "zh-TW": '加蛋' }, price: 6.00 },
+            { name: { pt: 'Chashu extra', en: 'Extra chashu', es: 'Chashu extra', de: 'Extra Chashu', fr: 'Chashu supplémentaire', ja: 'チャーシュー追加', "zh-TW": '加叉燒' }, price: 8.20 }
+        ]
+    },
+    {
+        id: 8,
+        name: { pt: 'Shio Chashu Lamen', en: 'Shio Chashu Lamen', es: 'Shio Chashu Lamen', de: 'Shio Chashu Lamen', fr: 'Shio Chashu Lamen', ja: '塩風味 叉焼ラーメン', "zh-TW": '鹽味風味 叉燒拉麵' },
+        price: 57.20,
+        dnaColor: '#ADD8E6',
+        imageData: 'images/item_8.webp',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Caldo de sal', 'menma', 'moyashi', 'algas marinhas', 'chashu', 'gergelim'],
+            en: ['Salt broth', 'menma', 'moyashi', 'seaweed', 'chashu', 'sesame'],
+            es: ['Caldo de sal', 'menma', 'brotes', 'algas marinas', 'chashu', 'sésamo'],
+            de: ['Salzbrühe', 'Menma', 'Sprossen', 'Seetang', 'Chashu', 'Sesam'],
+            fr: ['Bouillon salé', 'menma', 'germes de soja', 'algues', 'chashu', 'sésame'],
+            ja: ['塩スープ', 'メンマ', 'もやし', '海藻', 'チャーシュー', 'ごま'],
+            "zh-TW": ['鹽味湯頭', '筍乾', '豆芽菜', '海藻', '叉燒', '芝麻']
+        },
+        extras: [
+            { name: { pt: 'Ovo extra', en: 'Extra egg', es: 'Huevo extra', de: 'Extra Ei', fr: 'Œuf supplémentaire', ja: '卵追加', "zh-TW": '加蛋' }, price: 6.00 },
+            { name: { pt: 'Chashu extra', en: 'Extra chashu', es: 'Chashu extra', de: 'Extra Chashu', fr: 'Chashu supplémentaire', ja: 'チャーシュー追加', "zh-TW": '加叉燒' }, price: 8.20 }
+        ]
+    },
+    {
+        id: 9,
+        name: { pt: 'Shoyu Kazu Lamen', en: 'Shoyu Kazu Lamen', es: 'Shoyu Kazu Lamen', de: 'Shoyu Kazu Lamen', fr: 'Shoyu Kazu Lamen', ja: '醤油風味 八洲ラーメン', "zh-TW": '醬油風味 八洲拉麵' },
+        price: 72.20,
+        dnaColor: '#D2691E',
+        imageData: 'images/item_9.webp',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Caldo de shoyu', 'menma', 'shiraga negui', 'cebolinha', 'nori', 'ovo', 'chashu picado'],
+            en: ['Shoyu broth', 'menma', 'shiraga negui', 'green onion', 'nori', 'egg', 'diced chashu'],
+            es: ['Caldo de shoyu', 'menma', 'shiraga negui', 'cebollino', 'nori', 'huevo', 'chashu picado'],
+            de: ['Shoyu-Brühe', 'Menma', 'Shiraga Negui', 'Lauch', 'Nori', 'Ei', 'gewürfeltes Chashu'],
+            fr: ['Bouillon de shoyu', 'menma', 'shiraga negui', 'oignon vert', 'nori', 'œuf', 'chashu haché'],
+            ja: ['醤油スープ', 'メンマ', '白髪ネギ', 'ねぎ', 'のり', '卵', '細切れチャーシュー'],
+            "zh-TW": ['醬油湯頭', '筍乾', '白髮蔥', '蔥花', '海苔', '蛋', '切丁叉燒']
+        },
+        extras: [
+            { name: { pt: 'Ovo extra', en: 'Extra egg', es: 'Huevo extra', de: 'Extra Ei', fr: 'Œuf supplémentaire', ja: '卵追加', "zh-TW": '加蛋' }, price: 6.00 },
+            { name: { pt: 'Chashu extra', en: 'Extra chashu', es: 'Chashu extra', de: 'Extra Chashu', fr: 'Chashu supplémentaire', ja: 'チャーシュー追加', "zh-TW": '加叉燒' }, price: 8.20 }
+        ]
+    },
+    {
+        id: 10,
+        name: { pt: 'Shio Kazu Lamen', en: 'Shio Kazu Lamen', es: 'Shio Kazu Lamen', de: 'Shio Kazu Lamen', fr: 'Shio Kazu Lamen', ja: '塩風味 八洲ラーメン', "zh-TW": '鹽味風味 八洲拉麵' },
+        price: 71.00,
+        dnaColor: '#ADD8E6',
+        imageData: 'images/item_10.webp',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Caldo de sal', 'menma', 'shiraga negui', 'cebolinha', 'nori', 'ovo', 'chashu picado'],
+            en: ['Salt broth', 'menma', 'shiraga negui', 'green onion', 'nori', 'egg', 'diced chashu'],
+            es: ['Caldo de sal', 'menma', 'shiraga negui', 'cebollino', 'nori', 'huevo', 'chashu picado'],
+            de: ['Salzbrühe', 'Menma', 'Shiraga Negui', 'Lauch', 'Nori', 'Ei', 'gewürfeltes Chashu'],
+            fr: ['Bouillon salé', 'menma', 'shiraga negui', 'oignon vert', 'nori', 'œuf', 'chashu haché'],
+            ja: ['塩スープ', 'メンマ', '白髪ネギ', 'ねぎ', 'のり', '卵', '細切れチャーシュー'],
+            "zh-TW": ['鹽味湯頭', '筍乾', '白髮蔥', '蔥花', '海苔', '蛋', '切丁叉燒']
+        },
+        extras: [
+            { name: { pt: 'Ovo extra', en: 'Extra egg', es: 'Huevo extra', de: 'Extra Ei', fr: 'Œuf supplémentaire', ja: '卵追加', "zh-TW": '加蛋' }, price: 6.00 },
+            { name: { pt: 'Chashu extra', en: 'Extra chashu', es: 'Chashu extra', de: 'Extra Chashu', fr: 'Chashu supplémentaire', ja: 'チャーシュー追加', "zh-TW": '加叉燒' }, price: 8.20 }
+        ]
+    },
+    {
+        id: 11,
+        name: { pt: 'Shoyu Lamen Tradicional', en: 'Shoyu Lamen Traditional', es: 'Shoyu Lamen Tradicional', de: 'Shoyu Lamen Traditionell', fr: 'Shoyu Lamen Traditionnel', ja: '醤油風味 伝統ラーメン', "zh-TW": '醬油風味 傳統拉麵' },
+        price: 50.20,
+        dnaColor: '#D2691E',
+        imageData: 'images/item_11.webp',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Caldo de shoyu', '7 toppings: menma, moyashi, algas marinhas, chashu, gergelim'],
+            en: ['Shoyu broth', '7 toppings: menma, moyashi, seaweed, chashu, sesame'],
+            es: ['Caldo de shoyu', '7 toppings: menma, brotes, algas marinas, chashu, sésamo'],
+            de: ['Shoyu-Brühe', '7 Toppings: Menma, Sprossen, Seetang, Chashu, Sesam'],
+            fr: ['Bouillon de shoyu', '7 toppings : menma, germes de soja, algues, chashu, sésame'],
+            ja: ['醤油スープ', '7つのトッピング: メンマ、もやし、海藻、チャーシュー、ごま'],
+            "zh-TW": ['醬油湯頭', '7種配料：筍乾、豆芽菜、海藻、叉燒、芝麻']
+        },
+        extras: [
+            { name: { pt: 'Ovo extra', en: 'Extra egg', es: 'Huevo extra', de: 'Extra Ei', fr: 'Œuf supplémentaire', ja: '卵追加', "zh-TW": '加蛋' }, price: 6.00 },
+            { name: { pt: 'Chashu extra', en: 'Extra chashu', es: 'Chashu extra', de: 'Extra Chashu', fr: 'Chashu supplémentaire', ja: 'チャーシュー追加', "zh-TW": '加叉燒' }, price: 8.20 }
+        ]
+    },
+    {
+        id: 12,
+        name: { pt: 'Shio Lamen Tradicional', en: 'Shio Lamen Traditional', es: 'Shio Lamen Tradicional', de: 'Shio Lamen Traditionell', fr: 'Shio Lamen Traditionnel', ja: '塩風味 伝統ラーメン', "zh-TW": '鹽味風味 傳統拉麵' },
+        price: 49.00,
+        dnaColor: '#ADD8E6',
+        imageData: 'images/item_12.webp',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Caldo de sal', '7 toppings: menma, moyashi, algas marinhas, chashu, gergelim'],
+            en: ['Salt broth', '7 toppings: menma, moyashi, seaweed, chashu, sesame'],
+            es: ['Caldo de sal', '7 toppings: menma, brotes, algas marinas, chashu, sésamo'],
+            de: ['Salzbrühe', '7 Toppings: Menma, Sprossen, Seetang, Chashu, Sesam'],
+            fr: ['Bouillon salé', '7 toppings : menma, germes de soja, algues, chashu, sésame'],
+            ja: ['塩スープ', '7つのトッピング: メンマ、もやし、海藻、チャーシュー、ごま'],
+            "zh-TW": ['鹽味湯頭', '7種配料：筍乾、豆芽菜、海藻、叉燒、芝麻']
+        },
+        extras: [
+            { name: { pt: 'Ovo extra', en: 'Extra egg', es: 'Huevo extra', de: 'Extra Ei', fr: 'Œuf supplémentaire', ja: '卵追加', "zh-TW": '加蛋' }, price: 6.00 },
+            { name: { pt: 'Chashu extra', en: 'Extra chashu', es: 'Chashu extra', de: 'Extra Chashu', fr: 'Chashu supplémentaire', ja: 'チャーシュー追加', "zh-TW": '加叉燒' }, price: 8.20 }
+        ]
+    },
+    {
+        id: 13,
+        name: { pt: 'Shoyu Hiyashi Chuka', en: 'Shoyu Hiyashi Chuka', es: 'Shoyu Hiyashi Chuka', de: 'Shoyu Hiyashi Chuka', fr: 'Shoyu Hiyashi Chuka', ja: '醤油風味 冷やし中華', "zh-TW": '醬油風味 涼拌中華麵' },
+        price: 63.20,
+        dnaColor: '#D2691E',
+        imageData: 'images/item_13.webp',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Macarrão frio', 'tomate', 'pepino', 'chashu', 'moyashi', 'crepe de ovo', 'algas marinhas', 'gergelim', 'karashi', 'caldo frio de shoyu'],
+            en: ['Cold noodles', 'tomato', 'cucumber', 'chashu', 'moyashi', 'egg crepe', 'seaweed', 'sesame', 'karashi', 'cold shoyu broth'],
+            es: ['Fideos fríos', 'tomate', 'pepino', 'chashu', 'brotes', 'crepe de huevo', 'algas marinas', 'sésamo', 'karashi', 'caldo frío de shoyu'],
+            de: ['Kalte Nudeln', 'Tomate', 'Gurke', 'Chashu', 'Sprossen', 'Eierkrapfen', 'Seetang', 'Sesam', 'Karashi', 'kalte Shoyu-Brühe'],
+            fr: ['Nouilles froides', 'tomate', 'concombre', 'chashu', 'germes de soja', 'crêpe d’œuf', 'algues', 'sésame', 'karashi', 'bouillon froid de shoyu'],
+            ja: ['冷やし中華', 'トマト', 'きゅうり', 'チャーシュー', 'もやし', '卵のクレープ', '海藻', 'ごま', 'からし', '冷たい醤油スープ'],
+            "zh-TW": ['冷中華麵', '番茄', '小黃瓜', '叉燒', '豆芽菜', '蛋皮', '海藻', '芝麻', '芥末', '冷醬油湯頭']
+        },
+        extras: []
+    },
+    {
+        id: 14,
+        name: { pt: 'Goma Missô Hiyashi Chuka', en: 'Goma Missô Hiyashi Chuka', es: 'Goma Missô Hiyashi Chuka', de: 'Goma Missô Hiyashi Chuka', fr: 'Goma Missô Hiyashi Chuka', ja: '胡麻味噌 冷やし中華', "zh-TW": '芝麻味噌 涼拌中華麵' },
+        price: 65.00,
+        dnaColor: '#8B4513',
+        imageData: 'images/item_14.webp',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Macarrão frio', 'tomate', 'pepino', 'chashu', 'moyashi', 'kanikama', 'ovo cozido', 'nori', 'caldo frio de missô com gergelim'],
+            en: ['Cold noodles', 'tomato', 'cucumber', 'chashu', 'moyashi', 'kanikama', 'boiled egg', 'nori', 'cold miso broth with sesame'],
+            es: ['Fideos fríos', 'tomate', 'pepino', 'chashu', 'brotes', 'kanikama', 'huevo cocido', 'nori', 'caldo frío de miso con sésamo'],
+            de: ['Kalte Nudeln', 'Tomate', 'Gurke', 'Chashu', 'Sprossen', 'Kanikama', 'gekochtes Ei', 'Nori', 'kalte Miso-Brühe mit Sesam'],
+            fr: ['Nouilles froides', 'tomate', 'concombre', 'chashu', 'germes de soja', 'kanikama', 'œuf dur', 'nori', 'bouillon froid de miso au sésame'],
+            ja: ['冷やし中華', 'トマト', 'きゅうり', 'チャーシュー', 'もやし', 'カニカマ', 'ゆで卵', 'のり', '冷たいごま入り味噌スープ'],
+            "zh-TW": ['冷中華麵', '番茄', '小黃瓜', '叉燒', '豆芽菜', '蟹肉棒', '水煮蛋', '海苔', '冷芝麻味噌湯頭']
+        },
+        extras: []
+    },
+    {
+        id: 15,
+        name: { pt: 'Hokkaido Missô Tsukemen', en: 'Hokkaido Missô Tsukemen', es: 'Hokkaido Missô Tsukemen', de: 'Hokkaido Missô Tsukemen', fr: 'Hokkaido Missô Tsukemen', ja: '北海道味噌つけ麺', "zh-TW": '北海道味噌沾麵' },
+        price: 65.00,
+        dnaColor: '#8B4513',
+        imageData: 'images/item_15.webp',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Macarrão grosso', 'algas marinhas', 'nori', 'aburi chashu', 'chiguensai', 'ovo', 'caldo quente de missô Hokkaido'],
+            en: ['Thick noodles', 'seaweed', 'nori', 'aburi chashu', 'chiguensai', 'egg', 'hot Hokkaido miso broth'],
+            es: ['Fideos gruesos', 'algas marinas', 'nori', 'aburi chashu', 'chiguensai', 'huevo', 'caldo caliente de miso Hokkaido'],
+            de: ['Dicke Nudeln', 'Seetang', 'Nori', 'Aburi-Chashu', 'Chiguensai', 'Ei', 'heiße Hokkaido-Miso-Brühe'],
+            fr: ['Nouilles épaisses', 'algues', 'nori', 'chashu aburi', 'chiguensai', 'œuf', 'bouillon chaud de miso Hokkaido'],
+            ja: ['太麺', '海藻', 'のり', 'アブリチャーシュー', 'チゲンサイ', '卵', '温かい北海道味噌スープ'],
+            "zh-TW": ['粗麵', '海藻', '海苔', '炙燒叉燒', '青江菜', '蛋', '熱北海道味噌湯頭']
+        },
+        extras: []
+    },
+    {
+        id: 16,
+        name: { pt: 'Hokkaido Missô Lamen', en: 'Hokkaido Missô Lamen', es: 'Hokkaido Missô Lamen', de: 'Hokkaido Missô Lamen', fr: 'Hokkaido Missô Lamen', ja: '北海道味噌ラーメン', "zh-TW": '北海道味噌拉麵' },
+        price: 67.80,
+        dnaColor: '#8B4513',
+        imageData: 'images/item_16.webp',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Caldo de missô estilo Hokkaido', 'menma', 'moyashi', 'nira', 'algas marinhas', 'nori', 'cebolinha', 'gergelim'],
+            en: ['Hokkaido-style miso broth', 'menma', 'moyashi', 'nira', 'seaweed', 'nori', 'green onion', 'sesame'],
+            es: ['Caldo de miso estilo Hokkaido', 'menma', 'brotes', 'nira', 'algas marinas', 'nori', 'cebollino', 'sésamo'],
+            de: ['Hokkaido-Style Miso-Brühe', 'Menma', 'Sprossen', 'Nira', 'Seetang', 'Nori', 'Lauch', 'Sesam'],
+            fr: ['Bouillon de miso style Hokkaido', 'menma', 'germes de soja', 'nira', 'algues', 'nori', 'oignon vert', 'sésame'],
+            ja: ['北海道風味噌スープ', 'メンマ', 'もやし', 'ニラ', '海藻', 'のり', 'ねぎ', 'ごま'],
+            "zh-TW": ['北海道風味噌湯頭', '筍乾', '豆芽菜', '韭菜', '海藻', '海苔', '蔥花', '芝麻']
+        },
+        extras: [
+            { name: { pt: 'Ovo extra', en: 'Extra egg', es: 'Huevo extra', de: 'Extra Ei', fr: 'Œuf supplémentaire', ja: '卵追加', "zh-TW": '加蛋' }, price: 6.00 },
+            { name: { pt: 'Chashu extra', en: 'Extra chashu', es: 'Chashu extra', de: 'Extra Chashu', fr: 'Chashu supplémentaire', ja: 'チャーシュー追加', "zh-TW": '加叉燒' }, price: 8.20 }
+        ]
+    },
+    {
+        id: 17,
+        name: { pt: 'Shio Lamen Vegetariano', en: 'Shio Lamen Vegetarian', es: 'Shio Lamen Vegetariano', de: 'Shio Lamen Vegetarisch', fr: 'Shio Lamen Végétarien', ja: '塩味 素食ラーメン', "zh-TW": '鹽味 素食拉麵' },
+        price: 55.90,
+        dnaColor: '#ADD8E6',
+        imageData: 'images/item_17.webp',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Caldo de sal', 'menma', 'algas marinhas', 'nori', 'cebolinha', 'gergelim', 'repolho', 'cenoura', 'cebola', 'moyashi', 'nira refogados'],
+            en: ['Salt broth', 'menma', 'seaweed', 'nori', 'green onion', 'sesame', 'stir-fried cabbage, carrot, onion, moyashi, nira'],
+            es: ['Caldo de sal', 'menma', 'algas marinas', 'nori', 'cebollino', 'sésamo', 'repollo, zanahoria, cebolla, brotes, nira salteados'],
+            de: ['Salzbrühe', 'Menma', 'Seetang', 'Nori', 'Lauch', 'Sesam', 'gebratener Kohl, Karotte, Zwiebel, Sprossen, Nira'],
+            fr: ['Bouillon salé', 'menma', 'algues', 'nori', 'oignon vert', 'sésame', 'chou, carotte, oignon, germes de soja, nira sautés'],
+            ja: ['塩スープ', 'メンマ', '海藻', 'のり', 'ねぎ', 'ごま', '炒めたキャベツ、にんじん、玉ねぎ、もやし、ニラ'],
+            "zh-TW": ['鹽味湯頭', '筍乾', '海藻', '海苔', '蔥花', '芝麻', '炒高麗菜、胡蘿蔔、洋蔥、豆芽菜、韭菜']
+        },
+        extras: []
+    },
+    {
+        id: 18,
+        name: { pt: 'Shio Tan Tan Lamen', en: 'Shio Tan Tan Lamen', es: 'Shio Tan Tan Lamen', de: 'Shio Tan Tan Lamen', fr: 'Shio Tan Tan Lamen', ja: '塩味担々ラーメン', "zh-TW": '鹽味擔擔拉麵' },
+        price: 54.90,
+        dnaColor: '#ADD8E6',
+        imageData: 'images/item_18.webp',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Caldo de sal', 'chashu moido picante', 'moyashi', 'nira', 'cebolinha', 'gergelim'],
+            en: ['Salt broth', 'spicy ground chashu', 'moyashi', 'nira', 'green onion', 'sesame'],
+            es: ['Caldo de sal', 'chashu picado picante', 'brotes', 'nira', 'cebollino', 'sésamo'],
+            de: ['Salzbrühe', 'scharfer gehackter Chashu', 'Sprossen', 'Nira', 'Lauch', 'Sesam'],
+            fr: ['Bouillon salé', 'chashu haché épicé', 'germes de soja', 'nira', 'oignon vert', 'sésame'],
+            ja: ['塩スープ', '辛みそチャーシュー', 'もやし', 'ニラ', 'ねぎ', 'ごま'],
+            "zh-TW": ['鹽味湯頭', '辣肉燥叉燒', '豆芽菜', '韭菜', '蔥花', '芝麻']
+        },
+        extras: []
+    },
+    {
+        id: 19,
+        name: { pt: 'Missô Mazemen', en: 'Missô Mazemen', es: 'Missô Mazemen', de: 'Missô Mazemen', fr: 'Missô Mazemen', ja: '味噌混ぜ麺', "zh-TW": '味噌拌麵' },
+        price: 63.80,
+        dnaColor: '#8B4513',
+        imageData: 'images/item_19.webp',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Macarrão', 'chashu moído picante', 'milho', 'cebolinha', 'shiraga negui', 'ovo', 'nori', 'molho de missô com gergelim'],
+            en: ['Noodles', 'spicy ground chashu', 'corn', 'green onion', 'shiraga negui', 'egg', 'nori', 'miso sauce with sesame'],
+            es: ['Fideos', 'chashu picado picante', 'maíz', 'cebollino', 'shiraga negui', 'huevo', 'nori', 'salsa de miso con sésamo'],
+            de: ['Nudeln', 'scharfer gehackter Chashu', 'Mais', 'Lauch', 'Shiraga Negui', 'Ei', 'Nori', 'Miso-Sauce mit Sesam'],
+            fr: ['Nouilles', 'chashu haché épicé', 'maïs', 'oignon vert', 'shiraga negui', 'œuf', 'nori', 'sauce miso au sésame'],
+            ja: ['麺', '辛みそチャーシュー', 'コーン', 'ねぎ', '白髪ネギ', '卵', 'のり', 'ごま入り味噌ソース'],
+            "zh-TW": ['麵條', '辣肉燥叉燒', '玉米', '蔥花', '白髮蔥', '蛋', '海苔', '芝麻味噌醬']
+        },
+        extras: []
+    },
+    {
+        id: 20,
+        name: { pt: 'Missô Lamen Vegetariano', en: 'Miso Vegetarian Lamen', es: 'Missô Lamen Vegetariano', de: 'Miso Vegetarisch Lamen', fr: 'Missô Lamen Végétarien', ja: '味噌 素食ラーメン', "zh-TW": '味噌 素食拉麵' },
+        price: 60.40,
+        dnaColor: '#8B4513',
+        imageData: 'images/item_20.webp',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Caldo de missô', 'chashu moído picante', 'milho', 'cebolinha', 'shiraga negui', 'ovo', 'nori', 'molho de missô com gergelim'],
+            en: ['Miso broth', 'spicy ground chashu', 'corn', 'green onion', 'shiraga negui', 'egg', 'nori', 'miso sauce with sesame'],
+            es: ['Caldo de miso', 'chashu picado picante', 'maíz', 'cebollino', 'shiraga negui', 'huevo', 'nori', 'salsa de miso con sésamo'],
+            de: ['Miso-Brühe', 'scharfer gehackter Chashu', 'Mais', 'Lauch', 'Shiraga Negui', 'Ei', 'Nori', 'Miso-Sauce mit Sesam'],
+            fr: ['Bouillon de miso', 'chashu haché épicé', 'maïs', 'oignon vert', 'shiraga negui', 'œuf', 'nori', 'sauce miso au sésame'],
+            ja: ['味噌スープ', '辛みそチャーシュー', 'コーン', 'ねぎ', '白髪ネギ', '卵', 'のり', 'ごま入り味噌ソース'],
+            "zh-TW": ['味噌湯頭', '辣肉燥叉燒', '玉米', '蔥花', '白髮蔥', '蛋', '海苔', '芝麻味噌醬']
+        },
+        extras: []
+    },
+    {
+        id: 21,
+        name: { pt: 'Kara Missô Lamen', en: 'Kara Missô Lamen', es: 'Kara Missô Lamen', de: 'Kara Missô Lamen', fr: 'Kara Missô Lamen', ja: '辛味噌ラーメン', "zh-TW": '辣味噌拉麵' },
+        price: 62.00,
+        dnaColor: '#8B4513',
+        imageData: 'images/item_21.webp',
+        category: 'lamen',
+        ingredients: {
+            pt: ['Caldo picante de missô', 'menma', 'moyashi', 'nira', 'algas marinhas', 'chashu', 'kimchi', 'gergelim'],
+            en: ['Spicy miso broth', 'menma', 'moyashi', 'nira', 'seaweed', 'chashu', 'kimchi', 'sesame'],
+            es: ['Caldo de miso picante', 'menma', 'brotes', 'nira', 'algas marinas', 'chashu', 'kimchi', 'sésamo'],
+            de: ['Scharfe Miso-Brühe', 'Menma', 'Sprossen', 'Nira', 'Seetang', 'Chashu', 'Kimchi', 'Sesam'],
+            fr: ['Bouillon de miso épicé', 'menma', 'germes de soja', 'nira', 'algues', 'chashu', 'kimchi', 'sésame'],
+            ja: ['辛味噌スープ', 'メンマ', 'もやし', 'ニラ', '海藻', 'チャーシュー', 'キムチ', 'ごま'],
+            "zh-TW": ['辣味噌湯頭', '筍乾', '豆芽菜', '韭菜', '海藻', '叉燒', '泡菜', '芝麻']
+        },
+        extras: [
+            { name: { pt: 'Ovo extra', en: 'Extra egg', es: 'Huevo extra', de: 'Extra Ei', fr: 'Œuf supplémentaire', ja: '卵追加', "zh-TW": '加蛋' }, price: 6.00 },
+            { name: { pt: 'Chashu extra', en: 'Extra chashu', es: 'Chashu extra', de: 'Extra Chashu', fr: 'Chashu supplémentaire', ja: 'チャーシュー追加', "zh-TW": '加叉燒' }, price: 8.20 }
+        ]
+    },
+    {
+        id: 22,
+        name: { pt: 'Gyoza', en: 'Gyoza', es: 'Gyoza', de: 'Gyoza', fr: 'Gyoza', ja: '餃子', "zh-TW": '鍋貼' },
+        price: 23.00,
+        dnaColor: '#DEB887',
+        imageData: 'images/item_22.webp',
+        category: 'aperitivos',
+        ingredients: {
+            pt: ['Pastelzinhos de massa fina', 'recheio de carne de porco, legumes e nira', 'cozidos no vapor e grelhados'],
+            en: ['Small dumplings with thin dough', 'filling of pork, vegetables, and chives', 'steamed and grilled'],
+            es: ['Dumplings pequeños con masa fina', 'relleno de cerdo, verduras y puerro chino', 'al vapor y a la parrilla'],
+            de: ['Kleine Teigtaschen mit dünner Teigmasse', 'Füllung aus Schweinefleisch, Gemüse und Knoblauchschnittlauch', 'gedämpft und gegrillt'],
+            fr: ['Petits raviolis à la pâte fine', 'farce de porc, légumes et ciboulette chinoise', 'vapeur et grillés'],
+            ja: ['薄皮の小餃子', '豚肉、野菜、ニラの具', '蒸してから焼いた'],
+            "zh-TW": ['薄皮小餃子', '豬肉、蔬菜、韭菜餡', '先蒸後煎']
+        },
+        extras: []
+    },
+    {
+        id: 23,
+        name: { pt: 'Karaague', en: 'Karaage', es: 'Karaage', de: 'Karaage', fr: 'Karaage', ja: '唐揚げ', "zh-TW": '日式炸雞' },
+        price: 30.00,
+        dnaColor: '#DEB887',
+        imageData: 'images/item_23.webp',
+        category: 'aperitivos',
+        ingredients: {
+            pt: ['Pedacos de frango empanados e fritos'],
+            en: ['Pieces of fried chicken'],
+            es: ['Trozos de pollo fritos'],
+            de: ['Stücke gebratenes Hähnchen'],
+            fr: ['Morceaux de poulet frits'],
+            ja: ['揚げた鶏肉'],
+            "zh-TW": ['炸雞塊']
+        },
+        extras: []
+    },
+    {
+        id: 24,
+        name: { pt: 'Aburi Chashu', en: 'Aburi Chashu', es: 'Aburi Chashu', de: 'Aburi Chashu', fr: 'Aburi Chashu', ja: '炙りチャーシュー', "zh-TW": '炙燒叉燒' },
+        price: 34.50,
+        dnaColor: '#CD853F',
+        imageData: 'images/item_24.webp',
+        category: 'aperitivos',
+        ingredients: {
+            pt: ['Carne de porco marinada em missô especial e grelhada'],
+            en: ['Pork marinated in special miso and grilled'],
+            es: ['Cerdo marinado en miso especial y a la parrilla'],
+            de: ['Schweinefleisch in speziellem Miso mariniert und gegrillt'],
+            fr: ['Porc mariné dans un miso spécial et grillé'],
+            ja: ['特製味噌でマリネした豚肉を炙ったもの'],
+            "zh-TW": ['以特製味噌醃製的豬肉，再以炙燒方式料理']
+        },
+        extras: []
+    },
+    {
+        id: 25,
+        name: { pt: 'Chahan', en: 'Chahan', es: 'Chahan', de: 'Chahan', fr: 'Chahan', ja: '炒飯', "zh-TW": '炒飯' },
+        price: 25.90,
+        dnaColor: '#F4A460',
+        imageData: 'images/item_25.webp',
+        category: 'pratos_principais',
+        ingredients: {
+            pt: ['Arroz frito com ovo, chashu, naruto, cebolinha e cebola', 'temperado com sal, pimenta-do-reino e shoyu', 'decorado com conserva de gengibre'],
+            en: ['Fried rice with egg, chashu, naruto, green onion, and onion', 'seasoned with salt, black pepper, and shoyu', 'decorated with pickled ginger'],
+            es: ['Arroz frito con huevo, chashu, naruto, cebollino y cebolla', 'condimentado con sal, pimienta y shoyu', 'decorado con jengibre encurtido'],
+            de: ['Gebratener Reis mit Ei, Chashu, Naruto, Lauch und Zwiebel', 'gewürzt mit Salz, Pfeffer und Shoyu', 'verziert mit eingelegtem Ingwer'],
+            fr: ['Riz frit avec œuf, chashu, naruto, oignon vert et oignon', 'assaisonné avec sel, poivre noir et shoyu', 'décoré avec du gingembre confit'],
+            ja: ['卵、チャーシュー、なると、ねぎ、玉ねぎ入りの炒飯', '塩、コショウ、醤油で味付け', 'ショウガの甘酢漬けで飾り付け'],
+            "zh-TW": ['炒飯加蛋、叉燒、魚板、蔥花、洋蔥', '以鹽、黑胡椒、醬油調味', '以薑絲裝飾']
+        },
+        extras: []
+    },
+    {
+        id: 26,
+        name: { pt: 'Kimchi Chahan', en: 'Kimchi Chahan', es: 'Kimchi Chahan', de: 'Kimchi Chahan', fr: 'Kimchi Chahan', ja: 'キムチ炒飯', "zh-TW": '泡菜炒飯' },
+        price: 33.00,
+        dnaColor: '#F4A460',
+        imageData: 'images/item_26.webp',
+        category: 'pratos_principais',
+        ingredients: {
+            pt: ['Arroz frito com kimchi, ovo, chashu, naruto, cebolinha e cebola', 'temperado com sal, pimenta-do-reino e shoyu', 'decorado com conserva de gengibre'],
+            en: ['Fried rice with kimchi, egg, chashu, naruto, green onion, and onion', 'seasoned with salt, black pepper, and shoyu', 'decorated with pickled ginger'],
+            es: ['Arroz frito con kimchi, huevo, chashu, naruto, cebollino y cebolla', 'condimentado con sal, pimienta y shoyu', 'decorado con jengibre encurtido'],
+            de: ['Gebratener Reis mit Kimchi, Ei, Chashu, Naruto, Lauch und Zwiebel', 'gewürzt mit Salz, Pfeffer und Shoyu', 'verziert mit eingelegtem Ingwer'],
+            fr: ['Riz frit avec kimchi, œuf, chashu, naruto, oignon vert et oignon', 'assaisonné avec sel, poivre noir et shoyu', 'décoré avec du gingembre confit'],
+            ja: ['キムチ、卵、チャーシュー、なると、ねぎ、玉ねぎ入りの炒飯', '塩、コショウ、醤油で味付け', 'ショウガの甘酢漬けで飾り付け'],
+            "zh-TW": ['炒飯加泡菜、蛋、叉燒、魚板、蔥花、洋蔥', '以鹽、黑胡椒、醬油調味', '以薑絲裝飾']
+        },
+        extras: []
+    },
+    {
+        id: 27,
+        name: { pt: 'Arroz Branco', en: 'White Rice', es: 'Arroz Blanco', de: 'Weißer Reis', fr: 'Riz Blanc', ja: '白米', "zh-TW": '白米' },
+        price: 10.00,
+        dnaColor: '#F5F5DC',
+        imageData: 'images/item_27.webp',
+        category: 'acompanhamentos',
+        ingredients: {
+            pt: ['Arroz branco'],
+            en: ['White rice'],
+            es: ['Arroz blanco'],
+            de: ['Weißer Reis'],
+            fr: ['Riz blanc'],
+            ja: ['白米'],
+            "zh-TW": ['白米']
+        },
+        extras: []
+    },
+    {
+        id: 28,
+        name: { pt: 'Sakerinha', en: 'Sakerinha', es: 'Sakerinha', de: 'Sakerinha', fr: 'Sakerinha', ja: 'サケリーナ', "zh-TW": '清酒利口酒' },
+        price: 29.90,
+        dnaColor: '#F5F5DC',
+        imageData: 'images/item_28.webp',
+        category: 'drinks',
+        ingredients: {
+            pt: ['Sake com limão ou morango', 'saquê e muito gelo'],
+            en: ['Sake with lemon or strawberry', 'sake and lots of ice'],
+            es: ['Sake con limón o fresa', 'sake y mucho hielo'],
+            de: ['Sake mit Zitrone oder Erdbeere', 'Sake und viel Eis'],
+            fr: ['Sake avec citron ou fraise', 'saké et beaucoup de glace'],
+            ja: ['レモンかイチゴの日本酒', '日本酒と氷'],
+            "zh-TW": ['清酒加檸檬或草莓', '清酒加大量冰塊']
+        },
+        extras: []
+    },
+    {
+        id: 29,
+        name: { pt: 'Saketon', en: 'Saketon', es: 'Saketon', de: 'Saketon', fr: 'Saketon', ja: 'サケトーン', "zh-TW": '清酒通寧水' },
+        price: 34.00,
+        dnaColor: '#F5F5DC',
+        imageData: 'images/item_29.webp',
+        category: 'drinks',
+        ingredients: {
+            pt: ['Bebida baseada em sake', 'água tônica e gelo'],
+            en: ['Sake-based drink', 'tonic water and ice'],
+            es: ['Bebida a base de sake', 'agua tónica y hielo'],
+            de: ['Sake-basiertes Getränk', 'Tonic Water und Eis'],
+            fr: ['Boisson à base de saké', 'eau tonique et glace'],
+            ja: ['日本酒ベースのドリンク', 'トニックウォーターと氷'],
+            "zh-TW": ['以清酒為基底的飲料', '通寧水和冰塊']
+        },
+        extras: []
+    },
+    {
+        id: 30,
+        name: { pt: 'Lemon Chu Hi', en: 'Lemon Chu Hi', es: 'Lemon Chu Hi', de: 'Lemon Chu Hi', fr: 'Lemon Chu Hi', ja: 'レモンチューハイ', "zh-TW": '檸檬沙瓦' },
+        price: 29.00,
+        dnaColor: '#F5F5DC',
+        imageData: 'images/item_30.webp',
+        category: 'drinks',
+        ingredients: {
+            pt: ['Água tônica', 'suco de limão siciliano', 'Shochu e muito gelo'],
+            en: ['Tonic water', 'Sicilian lemon juice', 'Shochu and lots of ice'],
+            es: ['Agua tónica', 'jugo de limón siciliano', 'Shochu y mucho hielo'],
+            de: ['Tonic Water', 'Sizilianischer Zitronensaft', 'Shochu und viel Eis'],
+            fr: ['Eau tonique', 'jus de citron sicilien', 'Shochu et beaucoup de glace'],
+            ja: ['トニックウォーター', 'シチリアンレモンジュース', '焼酎と氷'],
+            "zh-TW": ['通寧水', '西西里檸檬汁', '燒酎和大量冰塊']
+        },
+        extras: []
+    },
+    {
+        id: 31,
+        name: { pt: 'Tropikazu', en: 'Tropikazu', es: 'Tropikazu', de: 'Tropikazu', fr: 'Tropikazu', ja: 'トロピカズ', "zh-TW": '熱帶八洲' },
+        price: 25.00,
+        dnaColor: '#F5F5DC',
+        imageData: 'images/item_31.webp',
+        category: 'drinks',
+        ingredients: {
+            pt: ['Suco de laranja', 'polpa de morango', 'citrus e chá preto'],
+            en: ['Orange juice', 'strawberry pulp', 'citrus and black tea'],
+            es: ['Jugo de naranja', 'pulpa de fresa', 'cítricos y té negro'],
+            de: ['Orangensaft', 'Erdbeerpüree', 'Zitrus und schwarzer Tee'],
+            fr: ['Jus d’orange', 'pulpe de fraise', 'agrumes et thé noir'],
+            ja: ['オレンジジュース', 'ストロベリーピューレ', 'シトラスと紅茶'],
+            "zh-TW": ['柳橙汁', '草莓果泥', '柑橘和紅茶']
+        },
+        extras: []
+    },
+    {
+        id: 32,
+        name: { pt: 'Ice Tea Kazu', en: 'Ice Tea Kazu', es: 'Ice Tea Kazu', de: 'Ice Tea Kazu', fr: 'Ice Tea Kazu', ja: 'アイスティー八洲', "zh-TW": '冰茶八洲' },
+        price: 16.00,
+        dnaColor: '#F5F5DC',
+        imageData: 'images/item_32.webp',
+        category: 'drinks',
+        ingredients: {
+            pt: ['Chá gelado Kazu'],
+            en: ['Kazu Iced Tea'],
+            es: ['Té helado Kazu'],
+            de: ['Kazu Eistee'],
+            fr: ['Thé glacé Kazu'],
+            ja: ['八洲アイスティー'],
+            "zh-TW": ['八洲冰茶']
+        },
+        extras: []
+    },
+    {
+        id: 33,
+        name: { pt: 'Oi Ocha Ryokucha', en: 'Oi Ocha Ryokucha', es: 'Oi Ocha Ryokucha', de: 'Oi Ocha Ryokucha', fr: 'Oi Ocha Ryokucha', ja: 'お伊勢茶 緑茶', "zh-TW": '御伊勢茶 綠茶' },
+        price: 16.00,
+        dnaColor: '#F5F5DC',
+        imageData: 'images/item_33.webp',
+        category: 'drinks',
+        ingredients: {
+            pt: ['Chá verde Oi Ocha Ryokucha'],
+            en: ['Oi Ocha Ryokucha Green Tea'],
+            es: ['Té verde Oi Ocha Ryokucha'],
+            de: ['Oi Ocha Ryokucha Grüner Tee'],
+            fr: ['Thé vert Oi Ocha Ryokucha'],
+            ja: ['お伊勢茶 緑茶'],
+            "zh-TW": ['御伊勢茶 綠茶']
+        },
+        extras: []
+    },
+    {
+        id: 34,
+        name: { pt: 'Stella Artois', en: 'Stella Artois', es: 'Stella Artois', de: 'Stella Artois', fr: 'Stella Artois', ja: 'ステラ アルトゥア', "zh-TW": '時代啤酒' },
+        price: 14.00,
+        dnaColor: '#F5F5DC',
+        imageData: 'images/item_34.webp',
+        category: 'drinks',
+        ingredients: {
+            pt: ['Cerveja Stella Artois 330ml'],
+            en: ['Stella Artois Beer 330ml'],
+            es: ['Cerveza Stella Artois 330ml'],
+            de: ['Stella Artois Bier 330ml'],
+            fr: ['Bière Stella Artois 330ml'],
+            ja: ['ステラ アルトゥア 330ml'],
+            "zh-TW": ['時代啤酒 330ml']
+        },
+        extras: []
+    },
+    {
+        id: 35,
+        name: { pt: 'Heineken', en: 'Heineken', es: 'Heineken', de: 'Heineken', fr: 'Heineken', ja: 'ハイネケン', "zh-TW": '海尼根' },
+        price: 15.00,
+        dnaColor: '#F5F5DC',
+        imageData: 'images/item_35.webp',
+        category: 'drinks',
+        ingredients: {
+            pt: ['Cerveja Heineken 330ml'],
+            en: ['Heineken Beer 330ml'],
+            es: ['Cerveza Heineken 330ml'],
+            de: ['Heineken Bier 330ml'],
+            fr: ['Bière Heineken 330ml'],
+            ja: ['ハイネケン 330ml'],
+            "zh-TW": ['海尼根 330ml']
+        },
+        extras: []
+    },
+    {
+        id: 36,
+        name: { pt: 'Original', en: 'Original', es: 'Original', de: 'Original', fr: 'Original', ja: 'オリジナル', "zh-TW": '原味' },
+        price: 12.00,
+        dnaColor: '#F5F5DC',
+        imageData: 'images/item_36.webp',
+        category: 'drinks',
+        ingredients: {
+            pt: ['Cerveja Original 330ml'],
+            en: ['Original Beer 330ml'],
+            es: ['Cerveza Original 330ml'],
+            de: ['Original Bier 330ml'],
+            fr: ['Bière Originale 330ml'],
+            ja: ['オリジナル 330ml'],
+            "zh-TW": ['原味啤酒 330ml']
+        },
+        extras: []
+    },
+    {
+        id: 37,
+        name: { pt: 'Corona', en: 'Corona', es: 'Corona', de: 'Corona', fr: 'Corona', ja: 'コロナ', "zh-TW": '科羅娜' },
+        price: 12.00,
+        dnaColor: '#F5F5DC',
+        imageData: 'images/item_37.webp',
+        category: 'drinks',
+        ingredients: {
+            pt: ['Cerveja Corona 330ml'],
+            en: ['Corona Beer 330ml'],
+            es: ['Cerveza Corona 330ml'],
+            de: ['Corona Bier 330ml'],
+            fr: ['Bière Corona 330ml'],
+            ja: ['コロナ 330ml'],
+            "zh-TW": ['科羅娜 330ml']
+        },
+        extras: []
+    },
+    {
+        id: 38,
+        name: { pt: 'OZE NO YUKIDOKE JUNMAI', en: 'OZE NO YUKIDOKE JUNMAI', es: 'OZE NO YUKIDOKE JUNMAI', de: 'OZE NO YUKIDOKE JUNMAI', fr: 'OZE NO YUKIDOKE JUNMAI', ja: '御酒 大雪解け 純米酒', "zh-TW": '清酒 大雪解 純米酒' },
+        price: 25.00,
+        dnaColor: '#F5F5DC',
+        imageData: 'images/item_38.webp',
+        category: 'drinks',
+        ingredients: {
+            pt: ['Sake Junmai'],
+            en: ['Junmai Sake'],
+            es: ['Sake Junmai'],
+            de: ['Junmai Sake'],
+            fr: ['Sake Junmai'],
+            ja: ['純米酒'],
+            "zh-TW": ['純米酒']
+        },
+        extras: []
+    },
+    {
+        id: 39,
+        name: { pt: 'SAWANOTSURU JOSEN HONJOZO', en: 'SAWANOTSURU JOSEN HONJOZO', es: 'SAWANOTSURU JOSEN HONJOZO', de: 'SAWANOTSURU JOSEN HONJOZO', fr: 'SAWANOTSURU JOSEN HONJOZO', ja: '澤の鶴 上撰 本醸造', "zh-TW": '澤之鶴 上選 本釀造' },
+        price: 38.00,
+        dnaColor: '#F5F5DC',
+        imageData: 'images/item_39.webp',
+        category: 'drinks',
+        ingredients: {
+            pt: ['Sake Honjozo'],
+            en: ['Honjozo Sake'],
+            es: ['Sake Honjozo'],
+            de: ['Honjozo Sake'],
+            fr: ['Sake Honjozo'],
+            ja: ['本醸造酒'],
+            "zh-TW": ['本釀造酒']
+        },
+        extras: []
+    },
+    {
+        id: 40,
+        name: { pt: 'Hakutake Shiro', en: 'Hakutake Shiro', es: 'Hakutake Shiro', de: 'Hakutake Shiro', fr: 'Hakutake Shiro', ja: '白鷹 白', "zh-TW": '白鷹 白' },
+        price: 42.00,
+        dnaColor: '#F5F5DC',
+        imageData: 'images/item_40.webp',
+        category: 'drinks',
+        ingredients: {
+            pt: ['Sake Arroz'],
+            en: ['Rice Sake'],
+            es: ['Sake de Arroz'],
+            de: ['Reis Sake'],
+            fr: ['Saké au Riz'],
+            ja: ['米酒'],
+            "zh-TW": ['米酒']
+        },
+        extras: []
+    },
+    {
+        id: 41,
+        name: { pt: 'TAKASHIMIZU KARAKUCHI', en: 'TAKASHIMIZU KARAKUCHI', es: 'TAKASHIMIZU KARAKUCHI', de: 'TAKASHIMIZU KARAKUCHI', fr: 'TAKASHIMIZU KARAKUCHI', ja: '高島水 辛口', "zh-TW": '高島水 辛口' },
+        price: 38.00,
+        dnaColor: '#F5F5DC',
+        imageData: 'images/item_41.webp',
+        category: 'drinks',
+        ingredients: {
+            pt: ['Sake Karakuchi'],
+            en: ['Dry Sake'],
+            es: ['Sake Seco'],
+            de: ['Trockener Sake'],
+            fr: ['Saké Sec'],
+            ja: ['辛口'],
+            "zh-TW": ['辛口']
+        },
+        extras: []
+    },
+    {
+        id: 42,
+        name: { pt: 'ICHIKO Silhouette | Cevada', en: 'ICHIKO Silhouette | Barley', es: 'ICHIKO Silhouette | Cebada', de: 'ICHIKO Silhouette | Gerste', fr: 'ICHIKO Silhouette | Orge', ja: '一校 シルエット | 大麦', "zh-TW": '一校 剪影 | 大麥' },
+        price: 35.00,
+        dnaColor: '#F5F5DC',
+        imageData: 'images/item_42.webp',
+        category: 'drinks',
+        ingredients: {
+            pt: ['Shochu Cevada'],
+            en: ['Barley Shochu'],
+            es: ['Shochu de Cebada'],
+            de: ['Gersten Shochu'],
+            fr: ['Shochu d’Orge'],
+            ja: ['大麦焼酎'],
+            "zh-TW": ['大麥燒酎']
+        },
+        extras: []
+    },
+    {
+        id: 43,
+        name: { pt: 'Lento | Açúcar Mascavo', en: 'Lento | Brown Sugar', es: 'Lento | Azúcar Moreno', de: 'Lento | Brauner Zucker', fr: 'Lento | Sucre de Canne', ja: 'レント | 黒糖', "zh-TW": '緩慢 | 黑糖' },
+        price: 60.00,
+        dnaColor: '#F5F5DC',
+        imageData: 'images/item_43.webp',
+        category: 'drinks',
+        ingredients: {
+            pt: ['Shochu Açúcar Mascavo'],
+            en: ['Brown Sugar Shochu'],
+            es: ['Shochu de Azúcar Moreno'],
+            de: ['Brauner Zucker Shochu'],
+            fr: ['Shochu au Sucre de Canne'],
+            ja: ['黒糖焼酎'],
+            "zh-TW": ['黑糖燒酎']
+        },
+        extras: []
+    },
+    {
+        id: 44,
+        name: { pt: 'Hakutake Shiro | Arroz', en: 'Hakutake Shiro | Rice', es: 'Hakutake Shiro | Arroz', de: 'Hakutake Shiro | Reis', fr: 'Hakutake Shiro | Riz', ja: '白鷹 | 米', "zh-TW": '白鷹 | 米' },
+        price: 100.00,
+        dnaColor: '#F5F5DC',
+        imageData: 'images/item_44.webp',
+        category: 'drinks',
+        ingredients: {
+            pt: ['Sake Arroz'],
+            en: ['Rice Sake'],
+            es: ['Sake de Arroz'],
+            de: ['Reis Sake'],
+            fr: ['Saké au Riz'],
+            ja: ['米酒'],
+            "zh-TW": ['米酒']
+        },
+        extras: []
+    },
+    {
+        id: 45,
+        name: { pt: 'Sorvete Lamen Kazu', en: 'Lamen Kazu Ice Cream', es: 'Helado Lamem Kazu', de: 'Lamem Kazu Eis', fr: 'Glace Lamem Kazu', ja: 'ラーメン八洲アイスクリーム', "zh-TW": '拉麵八洲冰淇淋' },
+        price: 16.00,
+        dnaColor: '#FFFACD',
+        imageData: 'images/item_45.webp',
+        category: 'sobremesas',
+        ingredients: {
+            pt: ['Sorvete com sabor inspirado no ramen', 'Matchá', 'Chocolate Belga', 'Leite Condensado com Raspas de Limão'],
+            en: ['Ice cream with ramen-inspired flavor', 'Matcha', 'Belgian Chocolate', 'Condensed Milk with Lemon Zest'],
+            es: ['Helado con sabor inspirado en ramen', 'Matcha', 'Chocolate Belga', 'Leche Condensada con Ralladura de Limón'],
+            de: ['Eis mit Ramen-inspiriertem Geschmack', 'Matcha', 'belgische Schokolade', 'Kondensmilch mit Zitronenabrieb'],
+            fr: ['Glace avec saveur inspirée du ramen', 'Matcha', 'chocolat belge', 'lait concentré avec zeste de citron'],
+            ja: ['ラーメンにインスパイアされた味', '抹茶', 'ベルギー産チョコレート', 'レモンの皮の練乳'],
+            "zh-TW": ['以拉麵為靈感的冰淇淋', '抹茶', '比利時巧克力', '檸檬皮煉乳']
+        },
+        extras: []
+    },
+    {
+        id: 46,
+        name: { pt: 'Sorvete de Mochi', en: 'Mochi Ice Cream', es: 'Helado de Mochi', de: 'Mochi Eis', fr: 'Glace Mochi', ja: 'モチアイス', "zh-TW": '麻糬冰淇淋' },
+        price: 14.00,
+        dnaColor: '#FFFACD',
+        imageData: 'images/item_46.webp',
+        category: 'sobremesas',
+        ingredients: {
+            pt: ['Sorvete envolto em massa de mochi'],
+            en: ['Ice cream wrapped in mochi dough'],
+            es: ['Helado envuelto en masa de mochi'],
+            de: ['Eis in Mochi-Teig eingewickelt'],
+            fr: ['Glace enveloppée dans une pâte de mochi'],
+            ja: ['餅生地で包まれたアイスクリーム'],
+            "zh-TW": ['包在麻糬皮裡的冰淇淋']
+        },
+        extras: []
+    },
+    {
+        id: 47,
+        name: { pt: 'Choux Cream', en: 'Choux Cream', es: 'Crema Choux', de: 'Choux Creme', fr: 'Crème Choux', ja: 'シュークリーム', "zh-TW": '泡芙' },
+        price: 18.00,
+        dnaColor: '#FFFACD',
+        imageData: 'images/item_47.webp',
+        category: 'sobremesas',
+        ingredients: {
+            pt: ['Massa leve e crocante', 'recheada com creme delicioso'],
+            en: ['Light and crispy pastry', 'filled with delicious cream'],
+            es: ['Masa ligera y crujiente', 'rellena con crema deliciosa'],
+            de: ['Leichte und knusprige Paste', 'gefüllt mit köstlicher Creme'],
+            fr: ['Pâte légère et croustillante', 'fourrée avec une crème délicieuse'],
+            ja: ['軽くてサクサクの生地', 'おいしいクリームが詰まっています'],
+            "zh-TW": ['輕盈酥脆的外皮', '內餡是美味的奶油']
+        },
+        extras: []
+    },
+    {
+        id: 48,
+        name: { pt: 'Combo 1 (Shio)', en: 'Combo 1 (Shio)', es: 'Combo 1 (Shio)', de: 'Combo 1 (Shio)', fr: 'Combo 1 (Shio)', ja: 'コンボ1 (塩)', "zh-TW": '套餐1 (鹽味)' },
+        price: 57.20,
+        dnaColor: '#4682B4',
+        imageData: 'images/item_48.webp',
+        category: 'combos',
+        ingredients: {
+            pt: ['1 Shio Lamen Tradicional', '3 unidades de Gyoza', '1 Refrigerante'],
+            en: ['1 Shio Lamen Traditional', '3 units of Gyoza', '1 Soda'],
+            es: ['1 Shio Lamen Tradicional', '3 unidades de Gyoza', '1 Refresco'],
+            de: ['1 Shio Lamen Traditionell', '3 Stück Gyoza', '1 Limonade'],
+            fr: ['1 Shio Lamen Traditionnel', '3 unités de Gyoza', '1 Soda'],
+            ja: ['塩味伝統ラーメン 1つ', '餃子 3個', '1ソーダ'],
+            "zh-TW": ['1份鹽味傳統拉麵', '3個鍋貼', '1杯汽水']
+        },
+        extras: []
+    },
+    {
+        id: 49,
+        name: { pt: 'Combo 2 (Shio)', en: 'Combo 2 (Shio)', es: 'Combo 2 (Shio)', de: 'Combo 2 (Shio)', fr: 'Combo 2 (Shio)', ja: 'コンボ2 (塩)', "zh-TW": '套餐2 (鹽味)' },
+        price: 58.40,
+        dnaColor: '#4682B4',
+        imageData: 'images/item_49.webp',
+        category: 'combos',
+        ingredients: {
+            pt: ['1 Shio Lamen Tradicional', '3 unidades de Karaague', '1 Refrigerante'],
+            en: ['1 Shio Lamen Traditional', '3 units of Karaage', '1 Soda'],
+            es: ['1 Shio Lamen Tradicional', '3 unidades de Karaage', '1 Refresco'],
+            de: ['1 Shio Lamen Traditionell', '3 Stück Karaage', '1 Limonade'],
+            fr: ['1 Shio Lamen Traditionnel', '3 unités de Karaage', '1 Soda'],
+            ja: ['塩味伝統ラーメン 1つ', '唐揚げ 3個', '1ソーダ'],
+            "zh-TW": ['1份鹽味傳統拉麵', '3個日式炸雞', '1杯汽水']
+        },
+        extras: []
+    },
+    {
+        id: 50,
+        name: { pt: 'Combo 3 (Shoyu)', en: 'Combo 3 (Shoyu)', es: 'Combo 3 (Shoyu)', de: 'Combo 3 (Shoyu)', fr: 'Combo 3 (Shoyu)', ja: 'コンボ3 (醤油)', "zh-TW": '套餐3 (醬油)' },
+        price: 61.70,
+        dnaColor: '#4682B4',
+        imageData: 'images/item_50.webp',
+        category: 'combos',
+        ingredients: {
+            pt: ['1 Shoyu Lamen Tradicional', '3 unidades de Gyoza', '1 Refrigerante'],
+            en: ['1 Shoyu Lamen Traditional', '3 units of Gyoza', '1 Soda'],
+            es: ['1 Shoyu Lamen Tradicional', '3 unidades de Gyoza', '1 Refresco'],
+            de: ['1 Shoyu Lamen Traditionell', '3 Stück Gyoza', '1 Limonade'],
+            fr: ['1 Shoyu Lamen Traditionnel', '3 unités de Gyoza', '1 Soda'],
+            ja: ['醤油味伝統ラーメン 1つ', '餃子 3個', '1ソーダ'],
+            "zh-TW": ['1份醬油傳統拉麵', '3個鍋貼', '1杯汽水']
+        },
+        extras: []
+    },
+    {
+        id: 51,
+        name: { pt: 'Combo 4 (Shoyu)', en: 'Combo 4 (Shoyu)', es: 'Combo 4 (Shoyu)', de: 'Combo 4 (Shoyu)', fr: 'Combo 4 (Shoyu)', ja: 'コンボ4 (醤油)', "zh-TW": '套餐4 (醬油)' },
+        price: 63.20,
+        dnaColor: '#4682B4',
+        imageData: 'images/item_51.webp',
+        category: 'combos',
+        ingredients: {
+            pt: ['1 Shoyu Lamen Tradicional', '3 unidades de Karaague', '1 Refrigerante'],
+            en: ['1 Shoyu Lamen Traditional', '3 units of Karaage', '1 Soda'],
+            es: ['1 Shoyu Lamen Tradicional', '3 unidades de Karaage', '1 Refresco'],
+            de: ['1 Shoyu Lamen Traditionell', '3 Stück Karaage', '1 Limonade'],
+            fr: ['1 Shoyu Lamen Traditionnel', '3 unités de Karaage', '1 Soda'],
+            ja: ['醤油味伝統ラーメン 1つ', '唐揚げ 3個', '1ソーダ'],
+            "zh-TW": ['1份醬油傳統拉麵', '3個日式炸雞', '1杯汽水']
+        },
+        extras: []
+    },
+    {
+        id: 52,
+        name: { pt: 'Combo 5 (Missô)', en: 'Combo 5 (Missô)', es: 'Combo 5 (Missô)', de: 'Combo 5 (Missô)', fr: 'Combo 5 (Missô)', ja: 'コンボ5 (味噌)', "zh-TW": '套餐5 (味噌)' },
+        price: 66.50,
+        dnaColor: '#4682B4',
+        imageData: 'images/item_52.webp',
+        category: 'combos',
+        ingredients: {
+            pt: ['1 Missô Lamen Tradicional', '3 unidades de Gyoza', '1 Refrigerante'],
+            en: ['1 Missô Lamen Traditional', '3 units of Gyoza', '1 Soda'],
+            es: ['1 Missô Lamen Tradicional', '3 unidades de Gyoza', '1 Refresco'],
+            de: ['1 Missô Lamen Traditionell', '3 Stück Gyoza', '1 Limonade'],
+            fr: ['1 Missô Lamen Traditionnel', '3 unités de Gyoza', '1 Soda'],
+            ja: ['味噌味伝統ラーメン 1つ', '餃子 3個', '1ソーダ'],
+            "zh-TW": ['1份味噌傳統拉麵', '3個鍋貼', '1杯汽水']
+        },
+        extras: []
+    },
+    {
+        id: 53,
+        name: { pt: 'Combo 6 (Missô)', en: 'Combo 6 (Missô)', es: 'Combo 6 (Missô)', de: 'Combo 6 (Missô)', fr: 'Combo 6 (Missô)', ja: 'コンボ6 (味噌)', "zh-TW": '套餐6 (味噌)' },
+        price: 67.80,
+        dnaColor: '#4682B4',
+        imageData: 'images/item_53.webp',
+        category: 'combos',
+        ingredients: {
+            pt: ['1 Missô Lamen Tradicional', '3 unidades de Karaague', '1 Refrigerante'],
+            en: ['1 Missô Lamen Traditional', '3 units of Karaage', '1 Soda'],
+            es: ['1 Missô Lamen Tradicional', '3 unidades de Karaage', '1 Refresco'],
+            de: ['1 Missô Lamen Traditionell', '3 Stück Karaage', '1 Limonade'],
+            fr: ['1 Missô Lamen Traditionnel', '3 unités de Karaage', '1 Soda'],
+            ja: ['味噌味伝統ラーメン 1つ', '唐揚げ 3個', '1ソーダ'],
+            "zh-TW": ['1份味噌傳統拉麵', '3個日式炸雞', '1杯汽水']
+        },
+        extras: []
+    },
+    {
+        id: 54,
+        name: { pt: 'Karaagedon', en: 'Karaagedon', es: 'Karaagedon', de: 'Karaagedon', fr: 'Karaagedon', ja: 'からあげ丼', "zh-TW": '炸雞蓋飯' },
+        price: 32.00,
+        dnaColor: '#CD853F',
+        imageData: 'images/item_54.webp',
+        category: 'pratos_principais',
+        ingredients: {
+            pt: ['Arroz branco', 'karaague', 'molho tonkatsu', 'maionese', 'alga nori'],
+            en: ['White rice', 'karaage', 'tonkatsu sauce', 'mayonnaise', 'nori seaweed'],
+            es: ['Arroz blanco', 'karaage', 'salsa tonkatsu', 'mayonesa', 'alga nori'],
+            de: ['Weißer Reis', 'Karaage', 'Tonkatsu-Soße', 'Mayonnaise', 'Nori-Alge'],
+            fr: ['Riz blanc', 'karaage', 'sauce tonkatsu', 'mayonnaise', 'algue nori'],
+            ja: ['白米', 'からあげ', 'とんかつソース', 'マヨネーズ', 'のり'],
+            "zh-TW": ['白米', '炸雞', '豚排醬', '美乃滋', '海苔']
+        },
+        extras: []
+    },
+    {
+        id: 55,
+        name: { pt: 'Chashudon', en: 'Chashudon', es: 'Chashudon', de: 'Chashudon', fr: 'Chashudon', ja: 'チャーシュー丼', "zh-TW": '叉燒蓋飯' },
+        price: 32.00,
+        dnaColor: '#CD853F',
+        imageData: 'images/item_55.webp',
+        category: 'pratos_principais',
+        ingredients: {
+            pt: ['Arroz branco', 'chashu em cubos', 'molho agridoce de shoyu', 'cebolinha'],
+            en: ['White rice', 'diced chashu', 'sweet and sour shoyu sauce', 'green onion'],
+            es: ['Arroz blanco', 'chashu en cubos', 'salsa agria y dulce de shoyu', 'cebollino'],
+            de: ['Weißer Reis', 'gewürfeltes Chashu', 'süß-saure Shoyu-Soße', 'Lauch'],
+            fr: ['Riz blanc', 'chashu haché', 'sauce aigre-douce au shoyu', 'oignon vert'],
+            ja: ['白米', '角切りチャーシュー', '甘酢あんかけ醤油', 'ねぎ'],
+            "zh-TW": ['白米', '切丁叉燒', '甜酸醬油醬', '蔥花']
+        },
+        extras: []
+    }
+];
+        let cart = [];
+        const cartCount = document.getElementById('cartCount');
+        const cartItems = document.getElementById('cartItems');
+        const cartTotal = document.getElementById('cartTotal');
+        const totalAmount = document.getElementById('totalAmount');
+        const currentProductEl = document.getElementById('currentProduct');
+        const addItemModal = document.getElementById('addItemModal');
+        const modalContent = document.getElementById('modalContent');
+        const modalItemName = document.getElementById('modalItemName');
+        const modalTitle = document.getElementById('modalTitle');
+        const continueShopping = document.getElementById('continueShopping');
+        const goToCart = document.getElementById('goToCart');
+        const pickupBtn = document.getElementById('pickupBtn');
+        const deliveryBtnCart = document.getElementById('deliveryBtnCart');
+        const tableBtn = document.getElementById('tableBtn');
+        const cartTitleEl = document.getElementById('cartTitle');
+        const totalLabelEl = document.getElementById('totalLabel');
+        // === Estado do sidebar mobile ===
+        let isSidebarOpen = window.innerWidth >= 768;
+        const sidebar = document.getElementById('mobileSidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        function toggleSidebar() {
+            isSidebarOpen = !isSidebarOpen;
+            sidebar.classList.toggle('-translate-x-full', !isSidebarOpen);
+            toggleBtn.innerHTML = isSidebarOpen ? '❮' : '➤';
+            // Corrige o layout após abrir/fechar o sidebar
+            setTimeout(() => {
+                resetCameraZoom();
+                updateRendererSize();
+            }, 300);
+        }
+        toggleBtn.addEventListener('click', toggleSidebar);
+        // === Three.js Setup ===
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0f172a);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+        const light = new THREE.PointLight(0xffa500, 1.5);
+        light.position.set(300, 300, 300);
+        scene.add(light);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.z = 500;
+        camera.zoom = 1; // Zoom padrão
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setClearColor(0x0f172a);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+        const objects = [];
+        const radius = 220;
+        const pitch = 60;
+        let scrollOffset = 0;
+        let targetOffset = 0;
+        let currentCategory = 'all';
+        // === Controle de interação ===
+        let isUserInteracting = false;
+        let isAutoScrolling = true;
+        let autoScrollSpeed = 0.0008;
+        let touchStartY = 0;
+        // === Pinch-to-zoom support ===
+        let initialDistance = 0;
+        let initialZoom = 1;
+        function getDistance(touches) {
+            const dx = touches[0].clientX - touches[1].clientX;
+            const dy = touches[0].clientY - touches[1].clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+        container.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                initialDistance = getDistance(e.touches);
+                initialZoom = camera.zoom;
+                isUserInteracting = true;
+                isAutoScrolling = false;
+            } else if (e.touches.length === 1) {
+                stopAutoScroll();
+                touchStartY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+        container.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                const currentDistance = getDistance(e.touches);
+                const zoomFactor = currentDistance / initialDistance;
+                camera.zoom = Math.min(Math.max(initialZoom * zoomFactor, 0.5), 2.0);
+                camera.updateProjectionMatrix();
+                e.preventDefault();
+            } else if (e.touches.length === 1) {
+                if (!isUserInteracting) isUserInteracting = true;
+                const touchY = e.touches[0].clientY;
+                const deltaY = touchStartY - touchY;
+                targetOffset += deltaY * 0.01;
+                touchStartY = touchY;
+            }
+        }, { passive: false });
+        container.addEventListener('touchend', () => {
+            // Opcional: reiniciar autoplay após X segundos
+        });
+        function resetCameraZoom() {
+            camera.zoom = 1;
+            camera.updateProjectionMatrix();
+        }
+        function updateRendererSize() {
+            const sidebarWidth = isSidebarOpen && window.innerWidth < 768 ? 280 : (window.innerWidth >= 768 ? 280 : 0);
+            const width = window.innerWidth - sidebarWidth;
+            const height = window.innerHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+            container.style.marginLeft = sidebarWidth + 'px';
+        }
+        function formatTime(slot) {
+            return `${slot.open.replace(':00', 'h')} – ${slot.close.replace(':00', 'h')}`;
+        }
+        function updateLanguage() {
+            const t = languages[currentLang];
+            const langButton = document.getElementById('langToggle');
+            const langLabels = { pt: 'PT', en: 'EN', es: 'ES', de: 'DE', fr: 'FR', ja: 'JA', "zh-TW": '中文' };
+            langButton.textContent = langLabels[currentLang] || currentLang.toUpperCase();
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                const cat = btn.dataset.category;
+                btn.textContent = categoryTranslations[currentLang][cat] || cat;
+            });
+            document.getElementById('currentProduct').textContent = t.productNav;
+            document.getElementById('cartButton').innerHTML = t.cartButton;
+            if (cartTitleEl) cartTitleEl.textContent = t.cartTitle;
+            if (totalLabelEl) totalLabelEl.textContent = t.total;
+            if (modalTitle) modalTitle.textContent = t.addToCart;
+            if (continueShopping) continueShopping.textContent = t.continueShopping;
+            if (goToCart) goToCart.textContent = t.viewCart;
+            pickupBtn.textContent = t.pickup;
+            deliveryBtnCart.textContent = t.delivery;
+            tableBtn.textContent = t.table;
+            if (cart.length === 0) {
+                const emptyMsg = cartItems.querySelector('.text-center');
+                if (emptyMsg) emptyMsg.textContent = t.cartEmpty;
+            }
+            updateCart();
+            updateRestaurantInfo();
+        }
+        function updateRestaurantInfo() {
+            const t = languages[currentLang];
+            const contactSection = document.getElementById('contact-section');
+            const labels = {
+                monday: t.monday,
+                tueToFri: t.tueToFri,
+                saturday: t.saturday,
+                sundayHoliday: t.sundayHoliday
+            };
+            let html = `
+                <h3 class="text-lg font-semibold mb-4 text-yellow-300 flex items-center">${t.hoursTitle}</h3>
+                <div class="space-y-1 text-sm text-gray-300 mb-4">
+                    <div class="flex justify-between"><span>${labels.monday}:</span><span class="text-green-400">${formatTime(restaurantConfig.hours.monday)}</span></div>
+                    <div class="flex justify-between"><span>${labels.tueToFri}:</span><span class="text-green-400">${formatTime(restaurantConfig.hours.tueToFri)}</span></div>
+                    <div class="flex justify-between"><span>${labels.saturday}:</span><span class="${restaurantConfig.hours.saturday.color}">${formatTime(restaurantConfig.hours.saturday)}</span></div>
+                    <div class="flex justify-between"><span>${labels.sundayHoliday}:</span><span class="${restaurantConfig.hours.sundayHoliday.color}">${formatTime(restaurantConfig.hours.sundayHoliday)}</span></div>
+                </div>
+                <p class="text-xs text-gray-500 italic mb-3">${t.specialNotice}</p>
+                <div class="space-y-2 text-gray-300 text-sm">
+                    <p>${t.address}</p>
+                    <p><a href="https://wa.me/${restaurantConfig.whatsapp}" target="_blank" class="text-green-400 hover:underline">${t.phone}</a></p>
+                    <p>${t.email}</p>
+                </div>
+            `;
+            contactSection.innerHTML = html;
+            updateOpenStatus();
+        }
+        function updateOpenStatus() {
+            const t = languages[currentLang];
+            const now = new Date();
+            const day = now.getDay();
+            const hour = now.getHours() + now.getMinutes() / 60;
+            let slot;
+            if (day === 1) slot = restaurantConfig.hours.monday;
+            else if (day >= 2 && day <= 5) slot = restaurantConfig.hours.tueToFri;
+            else if (day === 6) slot = restaurantConfig.hours.saturday;
+            else slot = restaurantConfig.hours.sundayHoliday;
+            const open = parseFloat(slot.open.replace(':', '.'));
+            const close = parseFloat(slot.close.replace(':', '.'));
+            const isOpen = hour >= open && hour < close;
+            const statusEl = document.createElement('div');
+            statusEl.className = `text-xs font-bold mt-2 ${isOpen ? 'text-green-400 animate-pulse' : 'text-red-500'}`;
+            statusEl.textContent = isOpen ? t.openNow : t.closed;
+            document.getElementById('contact-section').appendChild(statusEl);
+        }
+        function generateOrderMessage(type, extraData = {}) {
+            const t = languages[currentLang];
+            let customerMessage = '';
+            let internalMessage = '📌 *PEDIDO INTERNO (FUNCIONÁRIOS)*\n';
+            if (type === 'Mesa') {
+                customerMessage = t.whatsappMessages.introMesa;
+                internalMessage += '🍽️ *Novo Pedido para Mesa*\n';
+                if (extraData.tableNumber) {
+                    customerMessage += t.whatsappMessages.tablePrompt + extraData.tableNumber;
+                    internalMessage += "📍 Mesa: " + extraData.tableNumber + "\n";
+                }
+            } else if (type === 'Delivery') {
+                customerMessage = t.whatsappMessages.introDelivery;
+                internalMessage += '🚚 *Novo Pedido para Delivery*\n';
+                if (extraData.street && extraData.number && extraData.cep) {
+                    const fullAddress = `${extraData.street}, ${extraData.number} - CEP: ${extraData.cep}`;
+                    customerMessage += t.whatsappMessages.addressPrompt + fullAddress;
+                    internalMessage += "🏠 Endereço: " + fullAddress + "\n";
+                }
+            } else if (type === 'Retirada') {
+                customerMessage = t.whatsappMessages.introRetirada;
+                internalMessage += '🛍️ *Novo Pedido para Retirada*\n';
+            }
+            cart.forEach(item => {
+                const customerName = typeof item.name === 'object' ? item.name[currentLang] : item.name;
+                const internalName = item.name.pt || item.name;
+                customerMessage += `${customerName} x${item.quantity}\n`;
+                internalMessage += `${internalName} x${item.quantity}\n`;
+                if (item.removed && item.removed.length > 0) {
+                    customerMessage += `   🔺 ${t.removed}: ${item.removed.join(', ')}\n`;
+                    internalMessage += `   REMOVER: ${item.removed.join(', ')}\n`;
+                }
+                if (item.added && item.added.length > 0) {
+                    const addedNames = item.added.map(a => typeof a.name === 'object' ? a.name[currentLang] : a.name).join(', ');
+                    customerMessage += `   🔼 ${t.added}: ${addedNames}\n`;
+                    const addedNamesInternal = item.added.map(a => a.name.pt || a.name).join(', ');
+                    internalMessage += `   ADICIONAR: ${addedNamesInternal}\n`;
+                }
+                if (item.observation) {
+                    customerMessage += `   💬 ${t.observationLabel}: ${item.observation}\n`;
+                    internalMessage += `   OBS: ${item.observation}\n`;
+                }
+                customerMessage += '\n';
+                internalMessage += '\n';
+            });
+            const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0).toFixed(2).replace('.', ',');
+            customerMessage += `💰 *Total:* R$ ${total}\n`;
+            customerMessage += `\n━━━━━━━━━━━━━━━━━━━━\n`;
+            customerMessage += t.whatsappMessages.paymentPrompt;
+            const fullMessage = customerMessage + '\n' + internalMessage.trim();
+            return encodeURIComponent(fullMessage);
+        }
+        // === Modais de Mesa e Delivery ===
+        const tableModal = document.getElementById('tableModal');
+        const deliveryModal = document.getElementById('deliveryModal');
+        const tableNumberInput = document.getElementById('tableNumberInput');
+        const streetInput = document.getElementById('streetInput');
+        const numberInput = document.getElementById('numberInput');
+        const cepInput = document.getElementById('cepInput');
+        const tableError = document.getElementById('tableError');
+        const deliveryError = document.getElementById('deliveryError');
+        tableBtn.addEventListener('click', () => {
+            if (cart.length === 0) {
+                alert(languages[currentLang].cartEmpty);
+                return;
+            }
+            tableNumberInput.value = '';
+            tableError.textContent = '';
+            tableModal.style.display = 'flex';
+        });
+        deliveryBtnCart.addEventListener('click', () => {
+            if (cart.length === 0) {
+                alert(languages[currentLang].cartEmpty);
+                return;
+            }
+            streetInput.value = '';
+            numberInput.value = '';
+            cepInput.value = '';
+            deliveryError.textContent = '';
+            deliveryModal.style.display = 'flex';
+        });
+        document.getElementById('cancelTable').onclick = () => tableModal.style.display = 'none';
+        document.getElementById('cancelDelivery').onclick = () => deliveryModal.style.display = 'none';
+        document.getElementById('sendTableOrder').onclick = () => {
+            const tableNum = tableNumberInput.value.trim();
+            if (!tableNum) {
+                tableError.textContent = 'Por favor, informe o número da mesa.';
+                return;
+            }
+            tableError.textContent = '';
+            const message = generateOrderMessage('Mesa', { tableNumber: tableNum });
+            window.open(`https://wa.me/${restaurantConfig.whatsapp}?text=${message}`, '_blank');
+            tableModal.style.display = 'none';
+        };
+        document.getElementById('sendDeliveryOrder').onclick = () => {
+            const street = streetInput.value.trim();
+            const number = numberInput.value.trim();
+            const cep = cepInput.value.trim().replace(/\D/g, '');
+            if (!street || !number || !cep) {
+                deliveryError.textContent = 'Por favor, preencha todos os campos.';
+                return;
+            }
+            if (cep.length !== 8) {
+                deliveryError.textContent = 'CEP inválido. Informe 8 dígitos.';
+                return;
+            }
+            deliveryError.textContent = '';
+            const message = generateOrderMessage('Delivery', { street, number, cep });
+            window.open(`https://wa.me/${restaurantConfig.whatsapp}?text=${message}`, '_blank');
+            deliveryModal.style.display = 'none';
+        };
+        // === Restante da lógica original ===
+        const langToggle = document.getElementById('langToggle');
+        const langDropdown = document.getElementById('langDropdown');
+        langToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            langDropdown.classList.toggle('hidden');
+        });
+        document.addEventListener('click', () => {
+            if (!langDropdown.classList.contains('hidden')) {
+                langDropdown.classList.add('hidden');
+            }
+        });
+        langDropdown.querySelectorAll('[data-lang]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentLang = btn.getAttribute('data-lang');
+                updateLanguage();
+                langDropdown.classList.add('hidden');
+            });
+        });
+        function updateCart() {
+            if (cart.length === 0) {
+                cartItems.innerHTML = `<p class="text-gray-400 text-sm text-center py-4">${languages[currentLang].cartEmpty}</p>`;
+                cartTotal.classList.add('hidden');
+            } else {
+                cartItems.innerHTML = '';
+                cart.forEach(item => {
+                    const productName = typeof item.name === 'object' ? item.name[currentLang] : item.name;
+                    const el = document.createElement('div');
+                    el.className = 'bg-gray-800/50 rounded-lg p-3 text-sm';
+                    el.innerHTML = `
+                        <div class="flex justify-between mb-1">
+                            <span>${productName}</span>
+                            <span>R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button class="decrease-qty w-6 h-6 bg-red-600/20 rounded flex items-center justify-center text-xs" data-id="${item.id}">-</button>
+                            <span>${item.quantity}</span>
+                            <button class="increase-qty w-6 h-6 bg-green-600/20 rounded flex items-center justify-center text-xs" data-id="${item.id}">+</button>
+                        </div>
+                        <input type="text" placeholder="${languages[currentLang].obsPlaceholder}" value="${item.observation || ''}" 
+                               class="cart-input" data-id="${item.id}" />
+                    `;
+                    cartItems.appendChild(el);
+                });
+                cartTotal.classList.remove('hidden');
+                totalAmount.textContent = `R$ ${cart.reduce((sum, i) => sum + i.price * i.quantity, 0).toFixed(2).replace('.', ',')}`;
+            }
+            cartCount.textContent = cart.reduce((sum, i) => sum + i.quantity, 0);
+        }
+        cartItems.addEventListener('click', (e) => {
+            const id = parseInt(e.target.dataset.id);
+            const item = cart.find(i => i.id === id);
+            if (e.target.classList.contains('increase-qty')) item.quantity++;
+            if (e.target.classList.contains('decrease-qty')) {
+                item.quantity--;
+                if (item.quantity <= 0) cart = cart.filter(i => i.id !== id);
+            }
+            if (!e.target.matches('.cart-input')) updateCart();
+        });
+        cartItems.addEventListener('input', (e) => {
+            if (e.target.matches('.cart-input')) {
+                const id = parseInt(e.target.dataset.id);
+                const item = cart.find(i => i.id === id);
+                if (item) item.observation = e.target.value;
+            }
+        });
+        function addToCart(product) {
+            const t = languages[currentLang];
+            const productName = typeof product.name === 'object' ? product.name[currentLang] : product.name;
+            const customization = { product, removed: [], added: [], observation: '', totalPrice: product.price };
+            document.getElementById('customizeTitle').textContent = productName;
+            document.getElementById('removeLabel').textContent = t.removeLabel;
+            document.getElementById('addLabel').textContent = t.addLabel;
+            document.getElementById('obsLabel').textContent = t.obsLabel;
+            document.getElementById('customObservation').placeholder = t.obsPlaceholder;
+            const ingredientsEl = document.getElementById('ingredientsList');
+            const extrasEl = document.getElementById('extrasList');
+            ingredientsEl.innerHTML = '';
+            extrasEl.innerHTML = '';
+            const ingredients = typeof product.ingredients === 'object' ? product.ingredients[currentLang] : product.ingredients;
+            ingredients.forEach(ing => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center';
+                div.innerHTML = `<input type="checkbox" value="${ing}" class="mr-2 remove-ing"><span>${ing}</span>`;
+                ingredientsEl.appendChild(div);
+            });
+            const extras = product.extras.map(extra => ({
+                name: typeof extra.name === 'object' ? extra.name[currentLang] : extra.name,
+                price: extra.price
+            }));
+            extras.forEach(extra => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between';
+                div.innerHTML = `
+                    <div class="flex items-center">
+                        <input type="checkbox" value="${extra.name}" data-price="${extra.price}" class="mr-2 add-extra">
+                        <span>${extra.name}</span>
+                    </div>
+                    <span class="text-yellow-400 text-sm">+R$ ${extra.price.toFixed(2).replace('.', ',')}</span>
+                `;
+                extrasEl.appendChild(div);
+            });
+            const modal = document.getElementById('customizeModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('customizeContent').classList.remove('scale-95', 'opacity-0');
+                document.getElementById('customizeContent').classList.add('scale-100', 'opacity-100');
+            }, 10);
+            document.querySelectorAll('.add-extra').forEach(cb => {
+                cb.onchange = function() {
+                    const price = parseFloat(this.dataset.price);
+                    customization.totalPrice += this.checked ? price : -price;
+                };
+            });
+            document.getElementById('addToCartCustom').onclick = function() {
+                customization.removed = Array.from(document.querySelectorAll('.remove-ing:checked')).map(cb => cb.value);
+                customization.added = Array.from(document.querySelectorAll('.add-extra:checked')).map(cb => ({ 
+                    name: { pt: cb.value, en: cb.value, es: cb.value, de: cb.value, fr: cb.value, ja: cb.value, "zh-TW": cb.value }, 
+                    price: parseFloat(cb.dataset.price) 
+                }));
+                customization.observation = document.getElementById('customObservation').value;
+                const finalProduct = {
+                    id: product.id,
+                    name: product.name,
+                    price: customization.totalPrice,
+                    quantity: 1,
+                    removed: customization.removed,
+                    added: customization.added,
+                    observation: customization.observation,
+                    category: product.category
+                };
+                cart.push(finalProduct);
+                updateCart();
+                hideCustomizeModal();
+                showModal(product);
+            };
+            document.getElementById('cancelCustomize').onclick = hideCustomizeModal;
+        }
+        function hideCustomizeModal() {
+            const content = document.getElementById('customizeContent');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => document.getElementById('customizeModal').classList.add('hidden'), 300);
+        }
+        function showModal(product) {
+            const t = languages[currentLang];
+            const productName = typeof product.name === 'object' ? product.name[currentLang] : product.name;
+            modalItemName.textContent = `${productName} ${t.modalAdded}`;
+            addItemModal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+        function hideModal() {
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => addItemModal.classList.add('hidden'), 300);
+        }
+        continueShopping.addEventListener('click', hideModal);
+        goToCart.addEventListener('click', hideModal);
+        // === Sistema de Filtros e Cena 3D ===
+        function recreate3DScene() {
+            objects.forEach(obj => scene.remove(obj));
+            objects.length = 0;
+            const filteredData = currentCategory === 'all'
+                ? menuData
+                : menuData.filter(item => item.category === currentCategory);
+            if (filteredData.length === 0) {
+                currentProductEl.textContent = languages[currentLang].productNav;
+                return;
+            }
+            const total = filteredData.length;
+            const startIndex = -total;
+            const endIndex = total * 2;
+            for (let visualIndex = startIndex; visualIndex < endIndex; visualIndex++) {
+                const dataIndex = ((visualIndex % total) + total) % total;
+                const produto = filteredData[dataIndex];
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 256;
+                const ctx = canvas.getContext('2d');
+                function drawBackground() {
+                    const gradient = ctx.createLinearGradient(0, 0, 0, 256);
+                    gradient.addColorStop(0, produto.dnaColor);
+                    gradient.addColorStop(1, '#1e293b');
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+                function drawFallback() {
+                    drawBackground();
+                    ctx.font = 'bold 18px sans-serif';
+                    ctx.fillStyle = 'white';
+                    const productName = typeof produto.name === 'object' ? produto.name[currentLang] : produto.name;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(productName, canvas.width / 2, 220);
+                    ctx.fillStyle = '#facc15';
+                    ctx.fillText(`R$ ${produto.price.toFixed(2)}`, canvas.width / 2, 250);
+                }
+                function drawProductImage() {
+                    drawBackground();
+                    const img = new Image();
+                    img.onload = () => {
+                        const scale = Math.min(1, 200 / Math.max(img.width, img.height));
+                        const w = img.width * scale;
+                        const h = img.height * scale;
+                        const x = (canvas.width - w) / 2;
+                        const y = (canvas.height - h) / 2 - 20;
+                        ctx.drawImage(img, x, y, w, h);
+                        ctx.font = 'bold 18px sans-serif';
+                        ctx.fillStyle = 'white';
+                        const productName = typeof produto.name === 'object' ? produto.name[currentLang] : produto.name;
+                        ctx.textAlign = 'center';
+                        ctx.fillText(productName, canvas.width / 2, 220);
+                        ctx.fillStyle = '#facc15';
+                        ctx.fillText(`R$ ${produto.price.toFixed(2)}`, canvas.width / 2, 250);
+                        texture.image = canvas;
+                        texture.needsUpdate = true;
+                    };
+                    img.onerror = () => {
+                        drawFallback();
+                    };
+                    img.src = produto.imageData;
+                }
+                const texture = new THREE.CanvasTexture(canvas);
+                const geometry = new THREE.PlaneGeometry(140, 140);
+                const material = new THREE.MeshStandardMaterial({ map: texture, side: THREE.DoubleSide });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.userData = {
+                    id: produto.id,
+                    dataIndex,
+                    visualIndex,
+                    product: produto
+                };
+                mesh.userData.clickHandler = () => {
+                    addToCart(produto);
+                };
+                scene.add(mesh);
+                objects.push(mesh);
+                drawProductImage();
+            }
+            if (currentCategory === 'all') {
+                const xTudoIndex = menuData.findIndex(p => p.id === 1);
+                if (xTudoIndex !== -1) {
+                    targetOffset = -xTudoIndex * 0.8;
+                    scrollOffset = targetOffset;
+                } else {
+                    targetOffset = 0;
+                    scrollOffset = 0;
+                }
+            } else {
+                targetOffset = 0;
+                scrollOffset = 0;
+            }
+        }
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentCategory = btn.dataset.category;
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    if (b.dataset.category === currentCategory) {
+                        b.classList.replace('bg-gray-700', 'bg-red-600');
+                        b.classList.add('text-white');
+                    } else {
+                        b.classList.replace('bg-red-600', 'bg-gray-700');
+                        b.classList.remove('text-white');
+                    }
+                });
+                recreate3DScene();
+            });
+        });
+        // === Controles de navegação ===
+        function startAutoScroll() {
+            isAutoScrolling = true;
+            isUserInteracting = false;
+        }
+        function stopAutoScroll() {
+            isAutoScrolling = false;
+            isUserInteracting = true;
+        }
+        // Botões manuais
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            stopAutoScroll();
+            targetOffset -= 0.8;
+        });
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            stopAutoScroll();
+            targetOffset += 0.8;
+        });
+        // Scroll com mouse (desktop)
+        if (!isMobile) {
+            window.addEventListener('wheel', (e) => {
+                stopAutoScroll();
+                targetOffset += e.deltaY * 0.003;
+            });
+        }
+        // === Animação principal ===
+        function animate() {
+            requestAnimationFrame(animate);
+            if (isAutoScrolling && !isUserInteracting) {
+                targetOffset += autoScrollSpeed;
+            }
+            scrollOffset += (targetOffset - scrollOffset) * 0.1;
+            let closestObj = null;
+            let minDist = Infinity;
+            const filteredData = currentCategory === 'all'
+                ? menuData
+                : menuData.filter(item => item.category === currentCategory);
+            objects.forEach(obj => {
+                const angle = obj.userData.visualIndex * 0.8 + scrollOffset;
+                const y = (obj.userData.visualIndex + scrollOffset / 0.8) * pitch;
+                const x = Math.sin(angle) * radius;
+                const z = Math.cos(angle) * radius;
+                obj.position.set(x, y, z);
+                obj.lookAt(camera.position);
+                const distFromCenter = Math.abs(y);
+                if (distFromCenter < minDist) {
+                    minDist = distFromCenter;
+                    closestObj = obj;
+                }
+            });
+            if (closestObj && filteredData.length > 0) {
+                const productName = typeof closestObj.userData.product.name === 'object'
+                    ? closestObj.userData.product.name[currentLang]
+                    : closestObj.userData.product.name;
+                currentProductEl.textContent = productName;
+            }
+            renderer.render(scene, camera);
+        }
+        renderer.domElement.addEventListener('click', (event) => {
+            const sidebarWidth = isSidebarOpen && window.innerWidth < 768 ? 280 : (window.innerWidth >= 768 ? 280 : 0);
+            const mouse = new THREE.Vector2(
+                ((event.clientX - sidebarWidth) / (window.innerWidth - sidebarWidth)) * 2 - 1,
+                -(event.clientY / window.innerHeight) * 2 + 1
+            );
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(objects);
+            if (intersects.length > 0) {
+                const clickedMesh = intersects[0].object;
+                if (clickedMesh.userData.clickHandler) {
+                    clickedMesh.userData.clickHandler();
+                }
+            }
+        });
+        pickupBtn.addEventListener('click', () => {
+            if (cart.length === 0) {
+                alert(languages[currentLang].cartEmpty);
+                return;
+            }
+            const message = generateOrderMessage('Retirada');
+            window.open(`https://wa.me/${restaurantConfig.whatsapp}?text=${message}`, '_blank');
+        });
+        window.addEventListener('resize', () => {
+            updateRendererSize();
+        });
+        updateRendererSize();
+        recreate3DScene();
+        updateLanguage();
+        animate();
+        setTimeout(startAutoScroll, 2000);
+        if (window.innerWidth < 768) {
+            isSidebarOpen = false;
+            sidebar.classList.add('-translate-x-full');
+            toggleBtn.innerHTML = '➤';
+            updateRendererSize();
+        }
+    </script>
+</body>
+</html>
