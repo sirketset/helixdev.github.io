@@ -15,11 +15,13 @@ primary: '#ef4444',
 secondary: '#f59f00',
 accent: '#facc15',
 dark: '#0f172a',
-card: '#1e293b'
+card: '#1e293b',
+founder: '#7c3aed'
 },
 animation: {
 'float': 'float 6s ease-in-out infinite',
 'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+'pulse-fast': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
 }
 }
 }
@@ -27,14 +29,12 @@ animation: {
 </script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-
 body {
 font-family: 'Inter', sans-serif;
 background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
 color: white;
 overflow-x: hidden;
 }
-
 /* Efeito de Fundo Artístico */
 .bg-orb {
 position: absolute;
@@ -44,13 +44,11 @@ opacity: 0.4;
 z-index: -1;
 animation: float 10s infinite ease-in-out;
 }
-
 @keyframes float {
 0% { transform: translateY(0px); }
 50% { transform: translateY(-20px); }
 100% { transform: translateY(0px); }
 }
-
 .feature-list li::before {
 content: "✓";
 color: #10b981;
@@ -58,7 +56,6 @@ font-weight: bold;
 margin-right: 8px;
 display: inline-block;
 }
-
 /* Card Hover Effects */
 .plan-card {
 transition: all 0.3s ease;
@@ -67,8 +64,7 @@ transition: all 0.3s ease;
 transform: translateY(-5px);
 box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
 }
-
-/* Badge Fix - Mais espaço no topo */
+/* Badge Fix */
 .popular-badge {
 position: absolute;
 top: 2px;
@@ -76,7 +72,15 @@ left: 50%;
 transform: translateX(-50%);
 z-index: 20;
 }
-
+/* Founder Badge */
+.founder-badge {
+position: absolute;
+top: -12px;
+left: 50%;
+transform: translateX(-50%);
+z-index: 30;
+animation: pulse-fast infinite;
+}
 /* Scrollbar */
 ::-webkit-scrollbar {
 width: 8px;
@@ -88,17 +92,14 @@ background: #0f172a;
 background: #ef4444;
 border-radius: 4px;
 }
-
-/* Fade Animation for Plan Switch */
+/* Fade Animation */
 .plan-fade {
 animation: fadeIn 0.4s ease-in-out;
 }
-
 @keyframes fadeIn {
 from { opacity: 0; transform: translateY(10px); }
 to { opacity: 1; transform: translateY(0); }
 }
-
 /* Requirements Section */
 .requirement-card {
 transition: all 0.3s ease;
@@ -107,13 +108,31 @@ transition: all 0.3s ease;
 transform: scale(1.02);
 border-color: #facc15;
 }
+/* ROI Cards */
+.roi-card {
+background: linear-gradient(145deg, #1e293b, #0f172a);
+border: 1px solid #334155;
+transition: all 0.3s ease;
+}
+.roi-card:hover {
+border-color: #10b981;
+transform: translateY(-3px);
+}
+/* Counter Animation */
+.counter-number {
+font-variant-numeric: tabular-nums;
+}
+/* Guarantee Section */
+.guarantee-shield {
+filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.5));
+}
 </style>
 </head>
 <body class="overflow-x-hidden relative">
-
-<!-- Background Orbs for Artistic Feel -->
+<!-- Background Orbs -->
 <div class="bg-orb w-96 h-96 bg-red-600 top-0 left-0"></div>
 <div class="bg-orb w-96 h-96 bg-yellow-600 bottom-0 right-0" style="animation-delay: 2s;"></div>
+<div class="bg-orb w-64 h-64 bg-purple-600 top-1/3 right-1/4" style="animation-delay: 4s;"></div>
 
 <!-- Hero Section -->
 <section class="py-20 px-4 text-center relative z-10">
@@ -128,11 +147,9 @@ HelixMenu
 Transforme seu restaurante com um <strong>cardápio digital imersivo</strong>. <br class="hidden md:block"/>
 Uma espiral interativa que encanta, vende e fideliza.
 </p>
-
-<!-- Foco Total no WhatsApp -->
 <div class="flex flex-col sm:flex-row justify-center gap-4">
-<a href="#plans" class="bg-gradient-to-r from-green-600 to-green-500 text-white font-bold py-4 px-10 rounded-full text-lg shadow-lg hover:shadow-green-500/50 hover:scale-105 transition transform flex items-center justify-center gap-2">
-<i class="fab fa-whatsapp"></i> Fale Conosco no WhatsApp
+<a href="#founder" class="bg-gradient-to-r from-purple-600 to-purple-500 text-white font-bold py-4 px-10 rounded-full text-lg shadow-lg hover:shadow-purple-500/50 hover:scale-105 transition transform flex items-center justify-center gap-2">
+<i class="fas fa-crown"></i> Plano Fundador (20 Vagas)
 </a>
 <a href="https://helixmenu.com.br/Restaurante/Cardapio/" target="_blank" class="bg-gray-800/80 border border-gray-600 text-white font-bold py-4 px-10 rounded-full text-lg shadow-lg hover:bg-gray-700 transition">
 Ver modelo do Cardápio
@@ -141,26 +158,216 @@ Ver modelo do Cardápio
 </div>
 </section>
 
-<!-- Benefícios em Números -->
+<!-- 📊 ROI Section - NOVA SEÇÃO NO TOPO -->
+<section class="py-16 px-4 relative z-10 bg-gradient-to-b from-transparent to-gray-900/30">
+<div class="max-w-6xl mx-auto">
+<div class="text-center mb-12">
+<div class="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/30 text-green-300 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+📈 Retorno Comprovado
+</div>
+<h2 class="text-3xl md:text-4xl font-bold mb-4">💰 Calcule Seu ROI com o HelixMenu</h2>
+<p class="text-gray-400 max-w-3xl mx-auto">
+Veja números reais de quanto você pode recuperar investindo no cardápio digital
+</p>
+</div>
+
+<div class="grid md:grid-cols-2 gap-6 mb-8">
+<!-- ROI Card 1: Turistas -->
+<div class="roi-card rounded-2xl p-6 border-l-4 border-l-green-500">
+<div class="flex items-start gap-4">
+<div class="text-3xl">🌍</div>
+<div>
+<h3 class="text-lg font-bold text-white mb-2">Recupere Vendas Perdidas com Turistas</h3>
+<p class="text-gray-400 text-sm mb-3">Se seu restaurante atende 30 turistas/dia:</p>
+<ul class="space-y-2 text-sm">
+<li class="flex justify-between text-gray-300">
+<span>• 15% deixam de pedir (barreira do idioma)</span>
+<span class="text-red-400 font-semibold">4-5 vendas/dia perdidas</span>
+</li>
+<li class="flex justify-between text-gray-300">
+<span>• Ticket médio do turista</span>
+<span class="text-white font-semibold">R$65</span>
+</li>
+<li class="flex justify-between text-green-400 font-bold pt-2 border-t border-gray-700">
+<span>Vendas recuperadas/mês:</span>
+<span>4 × R$65 × 30 = R$7.800</span>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ROI Card 2: Erros na Cozinha -->
+<div class="roi-card rounded-2xl p-6 border-l-4 border-l-yellow-500">
+<div class="flex items-start gap-4">
+<div class="text-3xl">👨‍🍳</div>
+<div>
+<h3 class="text-lg font-bold text-white mb-2">Reduza Erros e Retrabalho na Cozinha</h3>
+<p class="text-gray-400 text-sm mb-3">Se sua cozinha tem 3 erros/dia por má comunicação:</p>
+<ul class="space-y-2 text-sm">
+<li class="flex justify-between text-gray-300">
+<span>• Custo por erro (retrabalho + insatisfação)</span>
+<span class="text-red-400 font-semibold">R$25</span>
+</li>
+<li class="flex justify-between text-gray-300">
+<span>• Erros evitados por mês</span>
+<span class="text-white font-semibold">3 × 30 dias = 90</span>
+</li>
+<li class="flex justify-between text-green-400 font-bold pt-2 border-t border-gray-700">
+<span>Economia mensal:</span>
+<span>90 × R$25 = R$2.250</span>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ROI Summary -->
+<div class="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-2xl p-6 text-center">
+<div class="flex flex-col md:flex-row items-center justify-center gap-6">
+<div class="text-left">
+<p class="text-gray-400 text-sm mb-1">💰 Investimento HelixMenu:</p>
+<p class="text-2xl font-bold text-white">R$80 - R$297/mês</p>
+</div>
+<div class="hidden md:block w-px h-12 bg-gray-700"></div>
+<div class="text-left">
+<p class="text-gray-400 text-sm mb-1">📊 ROI Estimado:</p>
+<p class="text-3xl font-extrabold bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">25x a 90x seu investimento</p>
+</div>
+</div>
+<p class="text-gray-500 text-xs mt-4">*Cálculos baseados em cenários reais. Resultados podem variar conforme volume e perfil do restaurante.</p>
+</div>
+</div>
+</section>
+
+<!-- 🔥 FOUNDER PLAN Section - NOVA SEÇÃO ANTES DOS PLANOS NORMAIS -->
+<section id="founder" class="py-16 px-4 relative z-10">
+<div class="max-w-5xl mx-auto">
+<div class="text-center mb-8">
+<div class="inline-flex items-center gap-2 bg-purple-500/20 border border-purple-400/40 text-purple-300 px-4 py-2 rounded-full text-sm font-bold mb-4 animate-pulse">
+🔥 OFERTA EXCLUSIVA — APENAS 20 VAGAS
+</div>
+<h2 class="text-3xl md:text-4xl font-extrabold mb-2">👑 PLANO FUNDADOR HELIX</h2>
+<p class="text-gray-400 max-w-2xl mx-auto">
+Seja um dos primeiros a transformar seu restaurante e garanta condições que nunca mais se repetirão
+</p>
+</div>
+
+<!-- Founder Plan Card -->
+<div class="plan-card bg-gradient-to-b from-purple-900/40 to-gray-900/60 border-2 border-purple-500/60 rounded-3xl p-8 relative overflow-hidden group shadow-2xl shadow-purple-500/20 max-w-3xl mx-auto">
+<!-- Founder Badge -->
+<div class="founder-badge bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold px-5 py-2 rounded-full shadow-lg flex items-center gap-2">
+<span class="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+⭐ FUNDADOR EXCLUSIVO
+</div>
+
+<!-- Counter -->
+<div class="text-center mb-6 mt-2">
+<div class="inline-flex items-center gap-3 bg-gray-900/80 border border-purple-500/30 rounded-full px-6 py-3">
+<span class="text-gray-400 text-sm">Vagas restantes:</span>
+<div class="flex items-center gap-1">
+<span id="counter" class="counter-number text-2xl font-extrabold text-purple-400">20</span>
+<span class="text-gray-500">/20</span>
+</div>
+<span class="text-red-400 text-xs font-semibold animate-pulse">⚠️ Esgotando!</span>
+</div>
+<p class="text-gray-500 text-xs mt-2">Oferta encerra automaticamente ao atingir 20 fundadores</p>
+</div>
+
+<!-- Price -->
+<div class="text-center mb-8">
+<div class="inline-block bg-gradient-to-r from-purple-600 to-pink-600 text-white font-extrabold text-4xl md:text-5xl px-6 py-3 rounded-2xl shadow-lg shadow-purple-500/30">
+R$80<span class="text-lg font-normal text-purple-200">/mês</span>
+</div>
+<p class="text-green-400 font-semibold mt-2 flex items-center justify-center gap-2">
+<i class="fas fa-lock"></i> Preço vitalício travado — NUNCA será reajustado
+</p>
+</div>
+
+<!-- Features Grid -->
+<div class="grid md:grid-cols-2 gap-4 mb-8">
+<div class="space-y-3">
+<div class="flex items-start gap-3">
+<span class="text-green-400 text-lg mt-1">✅</span>
+<span class="text-gray-300 text-sm">Acesso a TODAS funcionalidades atuais e futuras</span>
+</div>
+<div class="flex items-start gap-3">
+<span class="text-green-400 text-lg mt-1">✅</span>
+<span class="text-gray-300 text-sm">Setup gratuito: nossa equipe cadastra seu cardápio</span>
+</div>
+<div class="flex items-start gap-3">
+<span class="text-green-400 text-lg mt-1">✅</span>
+<span class="text-gray-300 text-sm">QR Code pronto para imprimir e colocar nas mesas</span>
+</div>
+<div class="flex items-start gap-3">
+<span class="text-green-400 text-lg mt-1">✅</span>
+<span class="text-gray-300 text-sm">Suporte VIP por WhatsApp por 90 dias</span>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex items-start gap-3">
+<span class="text-green-400 text-lg mt-1">✅</span>
+<span class="text-gray-300 text-sm">Software único no mercado com espiral interativa</span>
+</div>
+<div class="flex items-start gap-3">
+<span class="text-green-400 text-lg mt-1">✅</span>
+<span class="text-gray-300 text-sm">Cardápio em 7 idiomas com 1 clique</span>
+</div>
+<div class="flex items-start gap-3">
+<span class="text-green-400 text-lg mt-1">✅</span>
+<span class="text-gray-300 text-sm">Link profissional: helixmenu.com.br/seurestaurante</span>
+</div>
+<div class="flex items-start gap-3">
+<span class="text-green-400 text-lg mt-1">✅</span>
+<span class="text-gray-300 text-sm">🎁 Bônus: Manutenção e testes gratuitos vitalícios</span>
+</div>
+</div>
+</div>
+
+<!-- Conditions -->
+<div class="bg-gray-900/50 border border-purple-500/20 rounded-xl p-4 mb-6">
+<p class="text-purple-300 font-semibold text-sm mb-2">🔄 Condição de Adesão:</p>
+<p class="text-gray-400 text-xs mb-2">Em troca do preço vitalício, pedimos apenas:</p>
+<ul class="space-y-1 text-gray-400 text-xs">
+<li>• 1 feedback estruturado por mês (formulário de 5 min)</li>
+<li>• Autorização para usar seu case (com aprovação prévia)</li>
+</ul>
+</div>
+
+<!-- CTA Button -->
+<a href="https://wa.me/5511911324392?text=Olá!%20Quero%20garantir%20minha%20vaga%20no%20PLANO%20FUNDADOR%20HelixMenu%20(R$80/mês%20vitalício)!" 
+class="block w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-center py-4 rounded-xl text-lg shadow-lg shadow-purple-500/40 transition transform hover:scale-[1.02] flex items-center justify-center gap-3">
+<i class="fas fa-crown"></i> GARANTIR MINHA VAGA DE FUNDADOR
+</a>
+<p class="text-center text-gray-500 text-xs mt-3">🔒 Pagamento seguro • Cancelamento a qualquer momento</p>
+</div>
+
+<!-- Comparison Note -->
+<div class="mt-8 text-center">
+<p class="text-gray-400 text-sm">
+💡 <strong>Compare abaixo:</strong> Veja quanto você economiza sendo Fundador vs. planos regulares
+</p>
+</div>
+</div>
+</section>
+
+<!-- Benefícios em Números (mantido) -->
 <section class="py-12 px-4 relative z-10">
 <div class="max-w-6xl mx-auto">
 <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-<!-- Benefício 1 -->
 <div class="bg-gray-900/60 backdrop-blur-md rounded-xl p-6 text-center border border-red-500/20 hover:border-red-500/50 transition">
 <div class="text-4xl font-bold text-red-400 mb-2">+40%</div>
 <div class="text-lg font-semibold text-white">Aumento nas vendas</div>
 </div>
-<!-- Benefício 2 -->
 <div class="bg-gray-900/60 backdrop-blur-md rounded-xl p-6 text-center border border-yellow-500/20 hover:border-yellow-500/50 transition">
 <div class="text-4xl font-bold text-yellow-400 mb-2">-70%</div>
 <div class="text-lg font-semibold text-white">Erros de pedido</div>
 </div>
-<!-- Benefício 3 -->
 <div class="bg-gray-900/60 backdrop-blur-md rounded-xl p-6 text-center border border-green-500/20 hover:border-green-500/50 transition">
 <div class="text-4xl font-bold text-green-400 mb-2">+25%</div>
 <div class="text-lg font-semibold text-white">Ticket médio</div>
 </div>
-<!-- Benefício 4 -->
 <div class="bg-gray-900/60 backdrop-blur-md rounded-xl p-6 text-center border border-blue-500/20 hover:border-blue-500/50 transition">
 <div class="text-4xl font-bold text-blue-400 mb-2">98%</div>
 <div class="text-lg font-semibold text-white">Satisfação</div>
@@ -169,7 +376,7 @@ Ver modelo do Cardápio
 </div>
 </section>
 
-<!-- Requirements Section - O que enviar para criar o cardápio -->
+<!-- Requirements Section (mantido) -->
 <section class="py-16 px-4 relative z-10">
 <div class="max-w-6xl mx-auto">
 <div class="text-center mb-12">
@@ -178,51 +385,37 @@ Ver modelo do Cardápio
 Quanto mais informações você enviar, mais rápido seu cardápio ficará pronto!
 </p>
 </div>
-
 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-<!-- Item 1 -->
 <div class="requirement-card bg-gray-900/60 backdrop-blur-md rounded-xl p-6 border border-gray-700">
 <div class="text-3xl mb-3">🍽️</div>
 <h3 class="text-lg font-bold text-white mb-2">Nome do Prato</h3>
 <p class="text-gray-400 text-sm">Ex: Missô Yassai Lamen, X-Bacon Especial</p>
 </div>
-
-<!-- Item 2 -->
 <div class="requirement-card bg-gray-900/60 backdrop-blur-md rounded-xl p-6 border border-gray-700">
 <div class="text-3xl mb-3">💰</div>
 <h3 class="text-lg font-bold text-white mb-2">Preço</h3>
 <p class="text-gray-400 text-sm">Valor de cada item em Reais (R$)</p>
 </div>
-
-<!-- Item 3 -->
 <div class="requirement-card bg-gray-900/60 backdrop-blur-md rounded-xl p-6 border border-gray-700">
 <div class="text-3xl mb-3">📂</div>
 <h3 class="text-lg font-bold text-white mb-2">Categoria</h3>
 <p class="text-gray-400 text-sm">Lanche, Lamen, Combo, Sobremesa, Drink, etc.</p>
 </div>
-
-<!-- Item 4 -->
 <div class="requirement-card bg-gray-900/60 backdrop-blur-md rounded-xl p-6 border border-gray-700">
 <div class="text-3xl mb-3">🥘</div>
 <h3 class="text-lg font-bold text-white mb-2">Ingredientes</h3>
 <p class="text-gray-400 text-sm">Ovo, bacon, 2 hambúrgueres, milho, etc.</p>
 </div>
-
-<!-- Item 5 -->
 <div class="requirement-card bg-gray-900/60 backdrop-blur-md rounded-xl p-6 border border-gray-700">
 <div class="text-3xl mb-3">➕</div>
 <h3 class="text-lg font-bold text-white mb-2">Extras (Opcional)</h3>
 <p class="text-gray-400 text-sm">Molho extra, caldo adicional, queijo extra, etc.</p>
 </div>
-
-<!-- Item 6 -->
 <div class="requirement-card bg-gray-900/60 backdrop-blur-md rounded-xl p-6 border border-gray-700">
 <div class="text-3xl mb-3">📝</div>
 <h3 class="text-lg font-bold text-white mb-2">Descrição (Opcional)</h3>
 <p class="text-gray-400 text-sm">Detalhes sobre o prato ou harmonização</p>
 </div>
-
-<!-- Item 7 -->
 <div class="requirement-card bg-gray-900/60 backdrop-blur-md rounded-xl p-6 border border-yellow-500/30 lg:col-span-3">
 <div class="text-3xl mb-3">📸</div>
 <h3 class="text-lg font-bold text-yellow-400 mb-2">Imagem do Produto</h3>
@@ -234,8 +427,6 @@ Pode usar imagens do cardápio em PDF se já tiver, ou enviar o cardápio atual 
 </p>
 </div>
 </div>
-
-<!-- Dica Extra -->
 <div class="mt-8 bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/30 rounded-xl p-6 text-center">
 <p class="text-green-300 text-sm">
 💡 <strong>Dica:</strong> Envie tudo em um único arquivo (PDF, Word ou planilha) para agilizar o processo!
@@ -244,30 +435,26 @@ Pode usar imagens do cardápio em PDF se já tiver, ou enviar o cardápio atual 
 </div>
 </section>
 
-<!-- Plans Section - Estratégia 2 Não 3 -->
+<!-- Plans Section - Básico e Deluxe (mantido com ajustes) -->
 <section id="plans" class="py-20 px-4 relative z-10">
 <div class="max-w-5xl mx-auto">
 <div class="text-center mb-12">
-<h2 class="text-3xl md:text-4xl font-bold mb-4">Escolha Seu Plano</h2>
-<div class="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-2 rounded-full text-sm font-semibold mb-4">
-🔒 Preço Vitalício Travado
-</div>
+<h2 class="text-3xl md:text-4xl font-bold mb-4">Planos Regulares (Para Comparação)</h2>
 <p class="text-gray-400 max-w-2xl mx-auto">
-Assine agora e congele seu preço para sempre. Após as próximas atualizações, os valores serão reajustados.
+Veja quanto você economiza sendo Fundador. Estes planos terão reajustes após as próximas atualizações.
 </p>
 </div>
 
-<!-- Aviso de Urgência -->
-<div class="bg-gradient-to-r from-yellow-500/10 to-red-500/10 border border-yellow-500/30 rounded-xl p-4 mb-8 text-center">
-<p class="text-yellow-300 text-sm">
-⚠️ <strong>Atenção:</strong> O preço do plano Deluxe está congelado apenas para assinantes antes das novas funcionalidades (Gestão de Estoque e Relatórios). Após o lançamento, novos assinantes pagarão o valor reajustado.
+<!-- Aviso de Comparação -->
+<div class="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-xl p-4 mb-8 text-center">
+<p class="text-purple-300 text-sm">
+💎 <strong>Comparativo:</strong> Plano Fundador (R$80/mês vitalício) vs. Básico (R$116-149/mês) = <span class="font-bold text-green-400">Economia de até 46% para sempre!</span>
 </p>
 </div>
 
-<!-- Controles de Plano e Período Juntos -->
+<!-- Controles de Plano e Período -->
 <div class="bg-gray-800/50 backdrop-blur-md border border-gray-700 rounded-2xl p-6 mb-8">
 <div class="grid md:grid-cols-2 gap-6">
-<!-- Toggle Básico vs Deluxe -->
 <div class="text-center">
 <p class="text-gray-400 text-sm mb-3">Tipo de Plano</p>
 <div class="flex justify-center items-center gap-2">
@@ -279,8 +466,6 @@ Deluxe
 </button>
 </div>
 </div>
-
-<!-- Toggle Curto vs Longo Prazo - CHECKBOX ÚNICO COMPARTILHADO -->
 <div class="text-center">
 <p class="text-gray-400 text-sm mb-3">Período</p>
 <div class="flex justify-center items-center gap-3">
@@ -297,7 +482,7 @@ Deluxe
 
 <!-- Basic Plan Container -->
 <div id="basicContainer" class="plan-fade">
-<div class="plan-card bg-gray-800/70 border border-gray-600 rounded-2xl p-8 flex flex-col relative overflow-hidden group max-w-2xl mx-auto">
+<div class="plan-card bg-gray-800/70 border border-gray-600 rounded-2xl p-8 flex flex-col relative overflow-hidden group max-w-2xl mx-auto opacity-80">
 <div class="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-bl-full transition group-hover:bg-red-500/20"></div>
 <h3 class="text-3xl font-bold text-white mb-2">Básico</h3>
 <p class="text-gray-400 text-sm mb-6">Ideal para começar a digitalizar.</p>
@@ -308,15 +493,13 @@ Deluxe
 <li>Pedidos via WhatsApp</li>
 <li>Suporte básico</li>
 </ul>
-
-<!-- Short Term Options (1 & 3 Months) -->
 <div id="basic-short" class="space-y-4 block">
 <div class="bg-gray-900/50 border border-gray-700 rounded-lg p-4">
 <div class="flex justify-between items-center mb-2">
 <span class="font-bold text-white">1 Mês</span>
 <span class="text-red-400 font-bold">R$149<span class="text-xs text-gray-500">/mês</span></span>
 </div>
-<a href="https://wa.me/5511911324392?text=Olá,%20quero%20o%20plano%20Básico%20(1%20mês)%20com%20preço%20travado!" class="block w-full bg-gray-700 hover:bg-red-600 text-white text-center py-2 rounded-lg text-sm font-medium transition">Contratar</a>
+<a href="https://wa.me/5511911324392?text=Olá,%20quero%20o%20plano%20Básico%20(1%20mês)!" class="block w-full bg-gray-700 hover:bg-red-600 text-white text-center py-2 rounded-lg text-sm font-medium transition">Contratar</a>
 </div>
 <div class="bg-gray-900/50 border border-green-500/30 rounded-lg p-4 relative">
 <div class="absolute top-0 right-0 bg-green-600 text-xs text-white px-2 py-0.5 rounded-bl-lg">Recomendado</div>
@@ -324,18 +507,16 @@ Deluxe
 <span class="font-bold text-white">3 Meses</span>
 <span class="text-green-400 font-bold">R$134<span class="text-xs text-gray-500">/mês</span></span>
 </div>
-<a href="https://wa.me/5511911324392?text=Olá,%20quero%20o%20plano%20Básico%20(3%20meses)%20com%20preço%20travado!" class="block w-full bg-gray-700 hover:bg-green-600 text-white text-center py-2 rounded-lg text-sm font-medium transition">Contratar (Economize 10%)</a>
+<a href="https://wa.me/5511911324392?text=Olá,%20quero%20o%20plano%20Básico%20(3%20meses)!" class="block w-full bg-gray-700 hover:bg-green-600 text-white text-center py-2 rounded-lg text-sm font-medium transition">Contratar (Economize 10%)</a>
 </div>
 </div>
-
-<!-- Long Term Options (6 & 12 Months) -->
 <div id="basic-long" class="space-y-4 hidden">
 <div class="bg-gray-900/50 border border-gray-700 rounded-lg p-4">
 <div class="flex justify-between items-center mb-2">
 <span class="font-bold text-white">6 Meses</span>
 <span class="text-yellow-400 font-bold">R$125<span class="text-xs text-gray-500">/mês</span></span>
 </div>
-<a href="https://wa.me/5511911324392?text=Olá,%20quero%20o%20plano%20Básico%20(6%20meses)%20com%20preço%20travado!" class="block w-full bg-gray-700 hover:bg-yellow-600 text-white text-center py-2 rounded-lg text-sm font-medium transition">Contratar</a>
+<a href="https://wa.me/5511911324392?text=Olá,%20quero%20o%20plano%20Básico%20(6%20meses)!" class="block w-full bg-gray-700 hover:bg-yellow-600 text-white text-center py-2 rounded-lg text-sm font-medium transition">Contratar</a>
 </div>
 <div class="bg-gray-900/50 border border-yellow-500/50 rounded-lg p-4 relative shadow-lg shadow-yellow-500/10">
 <div class="absolute top-0 right-0 bg-yellow-500 text-xs text-black font-bold px-2 py-0.5 rounded-bl-lg">Melhor Valor</div>
@@ -343,7 +524,7 @@ Deluxe
 <span class="font-bold text-white">12 Meses</span>
 <span class="text-yellow-400 font-bold">R$116<span class="text-xs text-gray-500">/mês</span></span>
 </div>
-<a href="https://wa.me/5511911324392?text=Olá,%20quero%20o%20plano%20Básico%20(12%20meses)%20com%20preço%20travado!" class="block w-full bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black text-center py-2 rounded-lg text-sm font-bold transition">Contratar (Economize 22%)</a>
+<a href="https://wa.me/5511911324392?text=Olá,%20quero%20o%20plano%20Básico%20(12%20meses)!" class="block w-full bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black text-center py-2 rounded-lg text-sm font-bold transition">Contratar (Economize 22%)</a>
 </div>
 </div>
 </div>
@@ -351,8 +532,7 @@ Deluxe
 
 <!-- Deluxe Plan Container -->
 <div id="deluxeContainer" class="plan-fade hidden">
-<div class="plan-card bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-yellow-500/50 rounded-2xl p-8 flex flex-col relative overflow-hidden group shadow-2xl shadow-yellow-500/10 max-w-2xl mx-auto">
-<!-- Badge Fix - Mais espaço no topo -->
+<div class="plan-card bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-yellow-500/50 rounded-2xl p-8 flex flex-col relative overflow-hidden group shadow-2xl shadow-yellow-500/10 max-w-2xl mx-auto opacity-80">
 <div class="popular-badge bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 text-xs font-bold px-6 py-2 rounded-full z-20 shadow-lg">
 ⭐ MAIS POPULAR
 </div>
@@ -368,15 +548,13 @@ Deluxe
 <li class="text-yellow-200">Upgrade do Básico Mantém Preço Travado</li>
 <li class="text-yellow-200"><i class="fas fa-globe"></i> Idiomas Adicionais (Informe quais deseja)</li>
 </ul>
-
-<!-- Short Term Options (1 & 3 Months) -->
 <div id="deluxe-short" class="space-y-4 block">
 <div class="bg-gray-900/50 border border-gray-700 rounded-lg p-4">
 <div class="flex justify-between items-center mb-2">
 <span class="font-bold text-white">1 Mês</span>
 <span class="text-red-400 font-bold">R$449<span class="text-xs text-gray-500">/mês</span></span>
 </div>
-<a href="https://wa.me/5511911324392?text=Olá,%20quero%20o%20plano%20Deluxe%20(1%20mês)%20com%20preço%20travado!%20Quero%20adicionar%20idiomas:" class="block w-full bg-gray-700 hover:bg-red-600 text-white text-center py-2 rounded-lg text-sm font-medium transition">Contratar</a>
+<a href="https://wa.me/5511911324392?text=Olá,%20quero%20o%20plano%20Deluxe%20(1%20mês)!" class="block w-full bg-gray-700 hover:bg-red-600 text-white text-center py-2 rounded-lg text-sm font-medium transition">Contratar</a>
 </div>
 <div class="bg-gray-900/50 border border-green-500/30 rounded-lg p-4 relative">
 <div class="absolute top-0 right-0 bg-green-600 text-xs text-white px-2 py-0.5 rounded-bl-lg">Recomendado</div>
@@ -384,18 +562,16 @@ Deluxe
 <span class="font-bold text-white">3 Meses</span>
 <span class="text-green-400 font-bold">R$404<span class="text-xs text-gray-500">/mês</span></span>
 </div>
-<a href="https://wa.me/5511911324392?text=Olá,%20quero%20o%20plano%20Deluxe%20(3%20meses)%20com%20preço%20travado!%20Quero%20adicionar%20idiomas:" class="block w-full bg-gray-700 hover:bg-green-600 text-white text-center py-2 rounded-lg text-sm font-medium transition">Contratar (Economize 10%)</a>
+<a href="https://wa.me/5511911324392?text=Olá,%20quero%20o%20plano%20Deluxe%20(3%20meses)!" class="block w-full bg-gray-700 hover:bg-green-600 text-white text-center py-2 rounded-lg text-sm font-medium transition">Contratar (Economize 10%)</a>
 </div>
 </div>
-
-<!-- Long Term Options (6 & 12 Months) -->
 <div id="deluxe-long" class="space-y-4 hidden">
 <div class="bg-gray-900/50 border border-gray-700 rounded-lg p-4">
 <div class="flex justify-between items-center mb-2">
 <span class="font-bold text-white">6 Meses</span>
 <span class="text-yellow-400 font-bold">R$380<span class="text-xs text-gray-500">/mês</span></span>
 </div>
-<a href="https://wa.me/5511911324392?text=Olá,%20quero%20o%20plano%20Deluxe%20(6%20meses)%20com%20preço%20travado!%20Quero%20adicionar%20idiomas:" class="block w-full bg-gray-700 hover:bg-yellow-600 text-white text-center py-2 rounded-lg text-sm font-medium transition">Contratar</a>
+<a href="https://wa.me/5511911324392?text=Olá,%20quero%20o%20plano%20Deluxe%20(6%20meses)!" class="block w-full bg-gray-700 hover:bg-yellow-600 text-white text-center py-2 rounded-lg text-sm font-medium transition">Contratar</a>
 </div>
 <div class="bg-gray-900/50 border border-yellow-500/50 rounded-lg p-4 relative shadow-lg shadow-yellow-500/10">
 <div class="absolute top-0 right-0 bg-yellow-500 text-xs text-black font-bold px-2 py-0.5 rounded-bl-lg">Melhor Valor</div>
@@ -403,7 +579,7 @@ Deluxe
 <span class="font-bold text-white">12 Meses</span>
 <span class="text-yellow-400 font-bold">R$350<span class="text-xs text-gray-500">/mês</span></span>
 </div>
-<a href="https://wa.me/5511911324392?text=Olá,%20quero%20o%20plano%20Deluxe%20(12%20meses)%20com%20preço%20travado!%20Quero%20adicionar%20idiomas:" class="block w-full bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black text-center py-2 rounded-lg text-sm font-bold transition">Contratar (Economize 22%)</a>
+<a href="https://wa.me/5511911324392?text=Olá,%20quero%20o%20plano%20Deluxe%20(12%20meses)!" class="block w-full bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black text-center py-2 rounded-lg text-sm font-bold transition">Contratar (Economize 22%)</a>
 </div>
 </div>
 </div>
@@ -418,6 +594,151 @@ Deluxe
 </div>
 </section>
 
+<!-- 🔒 GARANTIA Section - NOVA SEÇÃO APÓS OS PLANOS -->
+<section class="py-16 px-4 relative z-10 bg-gradient-to-b from-gray-900/30 to-transparent">
+<div class="max-w-4xl mx-auto">
+<div class="text-center mb-10">
+<h2 class="text-3xl md:text-4xl font-bold mb-4">🔒 Garantia Helix de 14 Dias</h2>
+<p class="text-gray-400 max-w-2xl mx-auto">
+Teste sem risco. Se não amar, devolvemos 100% do seu dinheiro.
+</p>
+</div>
+
+<div class="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-2 border-green-500/40 rounded-3xl p-8 text-center relative overflow-hidden">
+<!-- Shield Icon -->
+<div class="flex justify-center mb-6">
+<div class="guarantee-shield relative">
+<div class="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-400 rounded-full flex items-center justify-center shadow-lg shadow-green-500/40">
+<i class="fas fa-shield-check text-white text-3xl"></i>
+</div>
+<div class="absolute -bottom-2 -right-2 bg-white text-green-700 text-xs font-bold px-3 py-1 rounded-full shadow-lg border-2 border-green-500">
+14 Dias
+</div>
+</div>
+</div>
+
+<div class="space-y-4 mb-6">
+<p class="text-gray-300 text-lg">
+"Teste o HelixMenu no seu restaurante por <strong class="text-white">14 dias completos</strong>.
+</p>
+<p class="text-gray-300">
+Se não perceber:
+</p>
+<ul class="space-y-2 text-left max-w-md mx-auto">
+<li class="flex items-center gap-2 text-green-300">
+<i class="fas fa-check-circle"></i>
+<span>Mais clareza nos pedidos</span>
+</li>
+<li class="flex items-center gap-2 text-green-300">
+<i class="fas fa-check-circle"></i>
+<span>Menos retrabalho na cozinha</span>
+</li>
+<li class="flex items-center gap-2 text-green-300">
+<i class="fas fa-check-circle"></i>
+<span>Elogios dos clientes sobre a experiência</span>
+</li>
+</ul>
+<p class="text-gray-300 text-lg">
+...basta nos enviar um WhatsApp e devolvemos <strong class="text-green-400">100% do valor pago</strong>.
+</p>
+</div>
+
+<div class="inline-flex items-center gap-2 bg-green-500/20 border border-green-500/30 text-green-300 px-4 py-2 rounded-full text-sm font-semibold">
+<i class="fas fa-lock"></i> Sem perguntas • Sem burocracia • Sem risco
+</div>
+</div>
+</div>
+</section>
+
+<!-- 🌍 SEU CARDÁPIO, SUA MARCA Section - NOVA SEÇÃO -->
+<section class="py-16 px-4 relative z-10">
+<div class="max-w-5xl mx-auto">
+<div class="text-center mb-12">
+<h2 class="text-3xl md:text-4xl font-bold mb-4">🔗 Seu Cardápio, Sua Marca</h2>
+<p class="text-gray-400 max-w-2xl mx-auto">
+Diferente de soluções genéricas, o HelixMenu é feito para destacar seu restaurante
+</p>
+</div>
+
+<!-- Turista Section -->
+<div class="bg-gray-900/60 backdrop-blur-md rounded-2xl p-6 md:p-8 border border-blue-500/20 mb-8">
+<div class="flex flex-col md:flex-row items-center gap-6">
+<div class="flex-1">
+<div class="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/30 text-blue-300 px-3 py-1 rounded-full text-sm font-semibold mb-4">
+🎯 SEU RESTAURANTE RECEBE TURISTAS?
+</div>
+<h3 class="text-2xl font-bold text-white mb-4">Elimine a Barreira do Idioma e Reduza Erros</h3>
+<ul class="space-y-3">
+<li class="flex items-start gap-3">
+<span class="text-green-400 text-lg mt-1">✅</span>
+<span class="text-gray-300">Cardápio em <strong>7 idiomas com 1 clique</strong> (PT, EN, ES, FR, DE, IT, RU)</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="text-green-400 text-lg mt-1">✅</span>
+<span class="text-gray-300"><strong>Fotos reais</strong> de cada prato = cliente sabe exatamente o que está pedindo</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="text-green-400 text-lg mt-1">✅</span>
+<span class="text-gray-300"><strong>Ingredientes e alérgenos destacados</strong> = menos devoluções na cozinha</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="text-green-400 text-lg mt-1">✅</span>
+<span class="text-gray-300">Pedido já chega <strong>formatado no WhatsApp</strong> = zero retrabalho de digitação</span>
+</li>
+</ul>
+</div>
+<div class="flex-shrink-0 text-center">
+<div class="text-6xl mb-2">🌐</div>
+<p class="text-gray-400 text-sm">7 idiomas<br>1 clique</p>
+</div>
+</div>
+</div>
+
+<!-- Professional Link Section -->
+<div class="grid md:grid-cols-2 gap-6">
+<div class="bg-gradient-to-br from-purple-900/30 to-gray-900/40 rounded-2xl p-6 border border-purple-500/20">
+<h4 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+<i class="fas fa-link text-purple-400"></i> Link Profissional Exclusivo
+</h4>
+<p class="text-gray-400 text-sm mb-4">
+Seu cardápio com identidade própria, não um link genérico:
+</p>
+<div class="bg-gray-900/80 rounded-lg p-3 font-mono text-sm text-center mb-4 border border-gray-700">
+<span class="text-gray-500">helixmenu.com.br/</span><span class="text-purple-400 font-bold">seurestaurante</span><span class="text-gray-500">/cardapio</span>
+</div>
+<ul class="space-y-2 text-sm">
+<li class="flex items-center gap-2 text-gray-300">
+<i class="fas fa-check text-green-400"></i> Fácil de decorar e digitar
+</li>
+<li class="flex items-center gap-2 text-gray-300">
+<i class="fas fa-check text-green-400"></i> Perfeito para QR Code na mesa
+</li>
+<li class="flex items-center gap-2 text-gray-300">
+<i class="fas fa-check text-green-400"></i> Ideal para Instagram e redes sociais
+</li>
+</ul>
+</div>
+
+<div class="bg-gradient-to-br from-yellow-900/30 to-gray-900/40 rounded-2xl p-6 border border-yellow-500/20">
+<h4 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+<i class="fas fa-gift text-yellow-400"></i> Bônus Exclusivo Fundador
+</h4>
+<p class="text-gray-400 text-sm mb-4">
+Ao garantir sua vaga no Plano Fundador, você recebe:
+</p>
+<div class="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-lg p-4 border border-yellow-500/30">
+<p class="text-yellow-200 font-semibold text-center">
+🎁 Manutenção e testes gratuitos vitalícios para seu restaurante!
+</p>
+</div>
+<p class="text-gray-500 text-xs mt-3 text-center">
+*Válido exclusivamente para os 20 primeiros fundadores
+</p>
+</div>
+</div>
+</div>
+</section>
+
 <!-- CTA Section -->
 <section class="py-16 px-4 text-center relative z-10">
 <div class="max-w-3xl mx-auto bg-gray-900/80 backdrop-blur-lg rounded-3xl p-10 border border-gray-700">
@@ -426,8 +747,11 @@ Deluxe
 Não deixe para depois. Garanta sua vaga na pré-venda e congele o valor do seu plano.
 </p>
 <div class="flex flex-wrap justify-center gap-4">
-<a href="https://wa.me/5511911324392?text=Quero%20criar%20meu%20cardápio%20digital%20com%20o%20HelixMenu!" target="_blank" class="bg-gradient-to-r from-green-600 to-green-500 text-white font-bold py-4 px-10 rounded-full text-lg shadow-lg hover:opacity-90 transition inline-flex items-center gap-2">
-<i class="fab fa-whatsapp"></i> Fale Conosco no WhatsApp
+<a href="#founder" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-4 px-10 rounded-full text-lg shadow-lg hover:opacity-90 transition inline-flex items-center gap-2">
+<i class="fas fa-crown"></i> Garantir Vaga de Fundador (R$80/mês)
+</a>
+<a href="https://wa.me/5511911324392?text=Quero%20criar%20meu%20cardápio%20digital%20com%20o%20HelixMenu!" target="_blank" class="bg-gray-800 border border-gray-600 text-white font-bold py-4 px-10 rounded-full text-lg shadow-lg hover:bg-gray-700 transition inline-flex items-center gap-2">
+<i class="fab fa-whatsapp"></i> Fale Conosco
 </a>
 </div>
 </div>
@@ -449,7 +773,6 @@ const basicContainer = document.getElementById('basicContainer');
 const deluxeContainer = document.getElementById('deluxeContainer');
 const btnBasic = document.getElementById('btnBasic');
 const btnDeluxe = document.getElementById('btnDeluxe');
-
 if (plan === 'basic') {
 basicContainer.classList.remove('hidden');
 deluxeContainer.classList.add('hidden');
@@ -467,33 +790,58 @@ btnBasic.classList.add('bg-gray-700', 'text-gray-300');
 }
 }
 
-// Toggle Curto vs Longo Prazo - FUNÇÃO CORRIGIDA
+// Toggle Curto vs Longo Prazo
 function togglePlans() {
 const isLong = document.getElementById('termToggle').checked;
-
 const basicShort = document.getElementById('basic-short');
 const basicLong = document.getElementById('basic-long');
 const deluxeShort = document.getElementById('deluxe-short');
 const deluxeLong = document.getElementById('deluxe-long');
-
-// Atualiza plano Básico
 if (isLong) {
 basicShort.classList.add('hidden');
 basicLong.classList.remove('hidden');
-} else {
-basicShort.classList.remove('hidden');
-basicLong.classList.add('hidden');
-}
-
-// Atualiza plano Deluxe
-if (isLong) {
 deluxeShort.classList.add('hidden');
 deluxeLong.classList.remove('hidden');
 } else {
+basicShort.classList.remove('hidden');
+basicLong.classList.add('hidden');
 deluxeShort.classList.remove('hidden');
 deluxeLong.classList.add('hidden');
 }
 }
+
+// 🔥 Counter Script - Simples e Seguro
+document.addEventListener('DOMContentLoaded', function() {
+const counterEl = document.getElementById('counter');
+if (counterEl) {
+// Valor inicial (pode ser ajustado conforme necessidade)
+let remaining = 20;
+counterEl.textContent = remaining;
+
+// Opcional: decrementar visualmente a cada X segundos para criar urgência
+// (Descomente se desejar ativar)
+/*
+const interval = setInterval(() => {
+if (remaining > 15) { // Para em 15 para não assustar
+remaining--;
+counterEl.textContent = remaining;
+if (remaining <= 15) clearInterval(interval);
+}
+}, 30000); // A cada 30 segundos
+*/
+}
+
+// Smooth scroll para links internos
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+anchor.addEventListener('click', function(e) {
+e.preventDefault();
+const target = document.querySelector(this.getAttribute('href'));
+if (target) {
+target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+});
+});
+});
 </script>
 </body>
 </html>
