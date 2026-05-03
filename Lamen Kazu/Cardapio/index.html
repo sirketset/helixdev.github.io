@@ -3184,57 +3184,86 @@
             document.getElementById('contact-section').appendChild(statusEl);
         }
         function generateOrderMessage(type, extraData = {}) {
-            const t = languages[currentLang];
-            let customerMessage = '';
-            let internalMessage = t.internal;
-            if (type === 'Mesa') {
-                customerMessage = t.whatsappMessages.introMesa;
-                internalMessage += '🍽️ *Novo Pedido para Mesa*\n';
-                if (extraData.tableNumber) {
-                    customerMessage += t.whatsappMessages.tablePrompt + extraData.tableNumber;
-                    internalMessage += "📍 Mesa: " + extraData.tableNumber + "\n";
-                }
-            } else if (type === 'Delivery') {
-                customerMessage = t.whatsappMessages.introDelivery;
-                internalMessage += '🚚 *Novo Pedido para Delivery*\n';
-                if (extraData.street && extraData.number && extraData.cep) {
-                    const fullAddress = `${extraData.street}, ${extraData.number} - CEP: ${extraData.cep}`;
-                    customerMessage += t.whatsappMessages.addressPrompt + fullAddress;
-                    internalMessage += "🏠 Endereço: " + fullAddress + "\n";
-                }
-            } else if (type === 'Retirada') {
-                customerMessage = t.whatsappMessages.introRetirada;
-                internalMessage += '🛍️ *Novo Pedido para Retirada*\n';
-            }
-            cart.forEach(item => {
-                const customerName = typeof item.name === 'object' ? item.name[currentLang] : item.name;
-                const internalName = item.name.pt || item.name;
-                customerMessage += `${customerName} x${item.quantity}\n`;
-                internalMessage += `${internalName} x${item.quantity}\n`;
-                if (item.removed && item.removed.length > 0) {
-                    customerMessage += `   🔺 ${t.removed}: ${item.removed.join(', ')}\n`;
-                    internalMessage += `   REMOVER: ${item.removed.join(', ')}\n`;
-                }
-                if (item.added && item.added.length > 0) {
-                    const addedNames = item.added.map(a => typeof a.name === 'object' ? a.name[currentLang] : a.name).join(', ');
-                    customerMessage += `   🔼 ${t.added}: ${addedNames}\n`;
-                    const addedNamesInternal = item.added.map(a => a.name.pt || a.name).join(', ');
-                    internalMessage += `   ADICIONAR: ${addedNamesInternal}\n`;
-                }
-                if (item.observation) {
-                    customerMessage += `   💬 ${t.observationLabel}: ${item.observation}\n`;
-                    internalMessage += `   OBS: ${item.observation}\n`;
-                }
-                customerMessage += '\n';
-                internalMessage += '\n';
-            });
-            const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0).toFixed(2).replace('.', ',');
-            customerMessage += `💰 *Total:* R$ ${total}\n`;
-            customerMessage += `\n━━━━━━━━━━━━━━━━━━━━\n`;
-            customerMessage += t.whatsappMessages.paymentPrompt;
-            const fullMessage = customerMessage + '\n' + internalMessage.trim();
-            return encodeURIComponent(fullMessage);
-        }
+  const t = languages[currentLang];
+  let customerMessage = '';
+  let internalMessage = '📌 *PEDIDO INTERNO (FUNCIONÁRIOS)*\n';
+
+  if (type === 'Mesa') {
+    customerMessage = t.whatsappMessages.introMesa;
+    internalMessage += '🍽️ *Novo Pedido para Mesa*\n';
+    if (extraData.tableNumber) {
+      customerMessage += t.whatsappMessages.tablePrompt + extraData.tableNumber;
+      internalMessage += "📍 Mesa: " + extraData.tableNumber + "\n";
+    }
+  } else if (type === 'Delivery') {
+    customerMessage = t.whatsappMessages.introDelivery;
+    internalMessage += '🚚 *Novo Pedido para Delivery*\n';
+    if (extraData.street && extraData.number && extraData.cep) {
+      const fullAddress = `${extraData.street}, ${extraData.number} - CEP: ${extraData.cep}`;
+      customerMessage += t.whatsappMessages.addressPrompt + fullAddress;
+      internalMessage += "🏠 Endereço: " + fullAddress + "\n";
+    }
+  } else if (type === 'Retirada') {
+    customerMessage = t.whatsappMessages.introRetirada;
+    internalMessage += '🛍️ *Novo Pedido para Retirada*\n';
+  }
+
+  cart.forEach(item => {
+    const product = menuData.find(p => p.id === item.id);
+    if (!product) return;
+
+    const customerName = typeof item.name === 'object' ? item.name[currentLang] : item.name;
+    const internalName = product.name.pt || customerName;
+
+    customerMessage += `${customerName} x${item.quantity}\n`;
+    internalMessage += `${internalName} x${item.quantity}\n`;
+
+    // Remoções (busca dinâmica por índice)
+    if (item.removedIndices && item.removedIndices.length > 0) {
+      const removedCustomer = item.removedIndices.map(idx => (product.ingredients[currentLang] || [])[idx] || '???').join(', ');
+      const removedPt = item.removedIndices.map(idx => (product.ingredients.pt || [])[idx] || '???').join(', ');
+      customerMessage += `   🔺 ${t.removed}: ${removedCustomer}\n`;
+      internalMessage += `   REMOVER: ${removedPt}\n`;
+    }
+
+    // Adições/Extras (busca dinâmica por índice)
+    if (item.addedIndices && item.addedIndices.length > 0) {
+      const addedCustomer = item.addedIndices.map(idx => {
+        const extra = product.extras[idx];
+        return extra ? (typeof extra.name === 'object' ? extra.name[currentLang] : extra.name) : '???';
+      }).join(', ');
+      const addedPt = item.addedIndices.map(idx => {
+        const extra = product.extras[idx];
+        return extra ? (extra.name.pt || (typeof extra.name === 'object' ? extra.name[currentLang] : extra.name)) : '???';
+      }).join(', ');
+      customerMessage += `   🔼 ${t.added}: ${addedCustomer}\n`;
+      internalMessage += `   ADICIONAR: ${addedPt}\n`;
+    }
+
+    // Compatibilidade com Combos (estrutura legada do openComboCustomization)
+    if (item.isCombo && item.added && item.added.length > 0) {
+       const addedCust = item.added.map(a => typeof a.name === 'object' ? a.name[currentLang] : a.name).join(', ');
+       const addedPt = item.added.map(a => a.name.pt || (typeof a.name === 'object' ? a.name[currentLang] : a.name)).join(', ');
+       customerMessage += `   🔼 ${t.added}: ${addedCust}\n`;
+       internalMessage += `   ITENS DO COMBO: ${addedPt}\n`;
+    }
+
+    if (item.observation) {
+      customerMessage += `   💬 ${t.observationLabel}: ${item.observation}\n`;
+      internalMessage += `   OBS: ${item.observation}\n`;
+    }
+
+    customerMessage += '\n';
+    internalMessage += '\n';
+  });
+
+  const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0).toFixed(2).replace('.', ',');
+  customerMessage += `💰 *Total:* R$ ${total}\n`;
+  customerMessage += `\n━━━━━━━━━━━━━━━━━━━━\n`;
+  customerMessage += t.whatsappMessages.paymentPrompt;
+
+  return encodeURIComponent(customerMessage + '\n' + internalMessage.trim());
+}
         const tableModal = document.getElementById('tableModal');
         const deliveryModal = document.getElementById('deliveryModal');
         const tableNumberInput = document.getElementById('tableNumberInput');
@@ -3480,110 +3509,107 @@
 
         // === ATUALIZAÇÃO DA FUNÇÃO addToCart ===
         function addToCart(product) {
-            if (product.isCombo && product.comboType) {
-                openComboCustomization(product);
-                return;
-            }
+  if (product.isCombo && product.comboType) {
+    openComboCustomization(product);
+    return;
+  }
+  const t = languages[currentLang];
+  const productName = typeof product.name === 'object' ? product.name[currentLang] : product.name;
 
-            const t = languages[currentLang];
-            const productName = typeof product.name === 'object' ? product.name[currentLang] : product.name;
-            const customization = { product, removed: [], added: [], observation: '', totalPrice: product.price };
-            document.getElementById('customizeTitle').textContent = productName;
-            const descriptionEl = document.getElementById('productDescription');
-            if (product.description) {
-                descriptionEl.innerHTML = `<p class="text-sm text-gray-300 mb-4">${product.description[currentLang] || product.description.pt || ''}</p>`;
-                descriptionEl.classList.remove('hidden');
-            } else {
-                descriptionEl.classList.add('hidden');
-            }
-            document.getElementById('removeLabel').textContent = t.removeLabel;
-            document.getElementById('addLabel').textContent = t.addLabel;
-            document.getElementById('obsLabel').textContent = t.obsLabel;
-            document.getElementById('customObservation').placeholder = t.obsPlaceholder;
-            const ingredientsEl = document.getElementById('ingredientsList');
-            const extrasEl = document.getElementById('extrasList');
-            ingredientsEl.innerHTML = '';
-            extrasEl.innerHTML = '';
+  const customization = { product, removedIndices: [], addedIndices: [], observation: '', totalPrice: product.price };
 
-            const isFried = ['gyoza', 'karaague', 'karaaguedon', 'choux cream', 'karaage'].some(keyword =>
-                productName.toLowerCase().includes(keyword)
-            );
-            if (product.ingredients) {
-                const ingredients = typeof product.ingredients === 'object'
-                    ? (product.ingredients[currentLang] || product.ingredients.pt || [])
-                    : product.ingredients;
-                if (Array.isArray(ingredients) && ingredients.length > 0) {
-                    if (isFried) {
-                        const div = document.createElement('div');
-                        div.className = 'text-sm text-gray-400';
-                        div.innerHTML = ingredients.map(ing => `<span>• ${ing}</span><br>`).join('');
-                        ingredientsEl.appendChild(div);
-                    } else {
-                        ingredients.forEach(ing => {
-                            const div = document.createElement('div');
-                            div.className = 'flex items-center';
-                            div.innerHTML = `<input type="checkbox" value="${ing}" class="mr-2 remove-ing"><span>${ing}</span>`;
-                            ingredientsEl.appendChild(div);
-                        });
-                    }
-                }
-            }
-            if (product.extras) {
-                const extras = product.extras.map(extra => ({
-                    name: typeof extra.name === 'object' ? (extra.name[currentLang] || extra.name.pt) : extra.name,
-                    price: extra.price
-                }));
-                extras.forEach(extra => {
-                    const div = document.createElement('div');
-                    div.className = 'flex items-center justify-between';
-                    div.innerHTML = `
-                        <div class="flex items-center">
-                            <input type="checkbox" value="${extra.name}" data-price="${extra.price}" class="mr-2 add-extra">
-                            <span>${extra.name}</span>
-                        </div>
-                        <span class="text-yellow-400 text-sm">+R$ ${extra.price.toFixed(2).replace('.', ',')}</span>
-                    `;
-                    extrasEl.appendChild(div);
-                });
-            }
-            const modal = document.getElementById('customizeModal');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                document.getElementById('customizeContent').classList.remove('scale-95', 'opacity-0');
-                document.getElementById('customizeContent').classList.add('scale-100', 'opacity-100');
-            }, 10);
-            document.querySelectorAll('.add-extra').forEach(cb => {
-                cb.onchange = function () {
-                    const price = parseFloat(this.dataset.price);
-                    customization.totalPrice += this.checked ? price : -price;
-                };
-            });
-            document.getElementById('addToCartCustom').onclick = function () {
-                customization.removed = Array.from(document.querySelectorAll('.remove-ing:checked')).map(cb => cb.value);
-                customization.added = Array.from(document.querySelectorAll('.add-extra:checked')).map(cb => ({
-                    name: { pt: cb.value, en: cb.value, es: cb.value, de: cb.value, fr: cb.value, ja: cb.value, "zh-TW": cb.value },
-                    price: parseFloat(cb.dataset.price)
-                }));
-                customization.observation = document.getElementById('customObservation').value;
-                const finalProduct = {
-                    id: product.id,
-                    name: product.name,
-                    price: customization.totalPrice,
-                    quantity: 1,
-                    removed: customization.removed,
-                    added: customization.added,
-                    observation: customization.observation,
-                    category: product.category
-                };
-                cart.push(finalProduct);
-                updateCart();
-                setTimeout(() => {
-                    hideCustomizeModal();
-                    showModal(product);
-                }, 100);
-            };
-            document.getElementById('cancelCustomize').onclick = hideCustomizeModal;
-        }
+  document.getElementById('customizeTitle').textContent = productName;
+  const descriptionEl = document.getElementById('productDescription');
+  if (product.description) {
+    descriptionEl.innerHTML = `<p class="text-sm text-gray-300 mb-4">${product.description[currentLang] || product.description.pt || ''}</p>`;
+    descriptionEl.classList.remove('hidden');
+  } else {
+    descriptionEl.classList.add('hidden');
+  }
+
+  document.getElementById('removeLabel').textContent = t.removeLabel;
+  document.getElementById('addLabel').textContent = t.addLabel;
+  document.getElementById('obsLabel').textContent = t.obsLabel;
+  document.getElementById('customObservation').placeholder = t.obsPlaceholder;
+
+  const ingredientsEl = document.getElementById('ingredientsList');
+  const extrasEl = document.getElementById('extrasList');
+  ingredientsEl.innerHTML = '';
+  extrasEl.innerHTML = '';
+
+  // Ingredientes: Usa ÍNDICES para referência dinâmica
+  const ingredients = product.ingredients ? (typeof product.ingredients === 'object' ? (product.ingredients[currentLang] || product.ingredients.pt || []) : product.ingredients) : [];
+  const isFried = ['gyoza', 'karaague', 'karaaguedon', 'choux cream', 'karaage'].some(keyword => productName.toLowerCase().includes(keyword));
+
+  if (Array.isArray(ingredients) && ingredients.length > 0) {
+    if (isFried) {
+      const div = document.createElement('div');
+      div.className = 'text-sm text-gray-400';
+      div.innerHTML = ingredients.map(ing => `<span>• ${ing}</span><br>`).join('');
+      ingredientsEl.appendChild(div);
+    } else {
+      ingredients.forEach((ing, idx) => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center';
+        div.innerHTML = `<input type="checkbox" value="${idx}" class="mr-2 remove-ing"><span>${ing}</span>`;
+        ingredientsEl.appendChild(div);
+      });
+    }
+  }
+
+  // Extras: Usa ÍNDICES para referência dinâmica
+  const extras = product.extras || [];
+  extras.forEach((extra, idx) => {
+    const name = typeof extra.name === 'object' ? (extra.name[currentLang] || extra.name.pt) : extra.name;
+    const div = document.createElement('div');
+    div.className = 'flex items-center justify-between';
+    div.innerHTML = `
+      <div class="flex items-center">
+        <input type="checkbox" value="${idx}" data-price="${extra.price}" class="mr-2 add-extra">
+        <span>${name}</span>
+      </div>
+      <span class="text-yellow-400 text-sm">+R$ ${extra.price.toFixed(2).replace('.', ',')}</span>
+    `;
+    extrasEl.appendChild(div);
+  });
+
+  const modal = document.getElementById('customizeModal');
+  modal.classList.remove('hidden');
+  setTimeout(() => {
+    document.getElementById('customizeContent').classList.remove('scale-95', 'opacity-0');
+    document.getElementById('customizeContent').classList.add('scale-100', 'opacity-100');
+  }, 10);
+
+  let currentTotal = product.price;
+  document.querySelectorAll('.add-extra').forEach(cb => {
+    cb.onchange = function () {
+      const price = parseFloat(this.dataset.price);
+      currentTotal += this.checked ? price : -price;
+    };
+  });
+
+  document.getElementById('addToCartCustom').onclick = function () {
+    customization.removedIndices = Array.from(document.querySelectorAll('.remove-ing:checked')).map(cb => parseInt(cb.value));
+    customization.addedIndices = Array.from(document.querySelectorAll('.add-extra:checked')).map(cb => parseInt(cb.value));
+    customization.observation = document.getElementById('customObservation').value;
+
+    const finalProduct = {
+      id: product.id,
+      name: product.name,
+      price: currentTotal,
+      quantity: 1,
+      removedIndices: customization.removedIndices,
+      addedIndices: customization.addedIndices,
+      observation: customization.observation,
+      category: product.category
+    };
+    cart.push(finalProduct);
+    updateCart();
+    setTimeout(() => { hideCustomizeModal(); showModal(product); }, 100);
+  };
+
+  document.getElementById('cancelCustomize').onclick = hideCustomizeModal;
+}
 
         function hideCustomizeModal() {
             const content = document.getElementById('customizeContent');
