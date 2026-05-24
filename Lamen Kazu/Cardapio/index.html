@@ -2604,11 +2604,16 @@ if (scannedTable) {
   }, 6000);
 }
 
-document.getElementById('finalizeOrderBtn').onclick = () => {
-if (!cart.length) return alert("Carrinho vazio");
-let t = tableNumber; if (!t) t = prompt("Número da mesa para enviar o pedido:");
-if (t) window.open(`https://wa.me/${restaurantConfig.whatsapp}?text=${generateOrderMessage('Mesa',{tableNumber:t})}`,'_blank');
-};
+// Botão Finalizar Pedido na Sidebar (usa mesa detectada se houver)
+document.getElementById('finalizeOrderBtn')?.addEventListener('click', () => {
+  if (!cart.length) return alert("Carrinho vazio");
+  let t = scannedTable;
+  if (!t) t = prompt("Número da mesa para enviar o pedido:");
+  if (t) {
+    const message = generateOrderMessage('Mesa', { tableNumber: t });
+    window.open(`https://wa.me/${restaurantConfig.whatsapp}?text=${message}`, '_blank');
+  }
+});
 document.getElementById('callWaiterBtn').onclick = () => {
 let t = tableNumber; if (!t) t = prompt("Número da mesa para chamar garçom:");
 if (t) window.open(`https://wa.me/${restaurantConfig.whatsapp}?text=${encodeURIComponent(`🛎️ *CHAMADA DE GARÇOM*\n📍 Mesa: ${t}\nCliente solicitou atendimento.`)}`,'_blank');
