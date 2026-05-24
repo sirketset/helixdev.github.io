@@ -33,9 +33,33 @@ header { position: fixed; top: 0; left: 0; right: 0; background: rgba(0, 0, 0, 0
 .modal-buttons button { flex: 1; padding: 8px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
 .modal-buttons .cancel { background: #374151; }
 .modal-buttons .confirm { background: linear-gradient(to right, #ef4444, #f59f00); color: white; }
+/* === Banner de Mesa Detectada via QR Code === */
+#tableBanner {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(to right, #facc15, #f59f00);
+  color: #0f172a;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  display: none;
+  animation: slideDown 0.3s ease-out;
+  pointer-events: none;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translate(-50%, -20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
 </style>
 </head>
 <body>
+<!-- Banner de Mesa Detectada via QR Code -->
+<div id="tableBanner">📍 Atendimento na Mesa <span id="bannerTableNumber"></span></div>
 <aside id="mobileSidebar" class="sidebar -translate-x-full md:translate-x-0">
 <div class="flex items-center mb-6"><div class="mr-2">🔥</div><h1 class="text-xl font-bold bg-gradient-to-r from-red-500 to-yellow-400 bg-clip-text text-transparent">Lamen Kazu</h1></div>
 <div class="mt-4">
@@ -2553,11 +2577,32 @@ customer += `💰 *Total:* R$ ${total}\n━━━━━━━━━━━━━�
 return encodeURIComponent(customer + '\n' + internal.trim());
 }
 
-const tableModal = document.getElementById('tableModal'), deliveryModal = document.getElementById('deliveryModal');
-const tInput = document.getElementById('tableNumberInput'), sInput = document.getElementById('streetInput'), nInput = document.getElementById('numberInput'), cInput = document.getElementById('cepInput');
-const tErr = document.getElementById('tableError'), dErr = document.getElementById('deliveryError');
+// === MODAIS E DETECÇÃO DE MESA VIA QR CODE ===
+const tableModal = document.getElementById('tableModal');
+const deliveryModal = document.getElementById('deliveryModal');
+const tInput = document.getElementById('tableNumberInput');
+const sInput = document.getElementById('streetInput');
+const nInput = document.getElementById('numberInput');
+const cInput = document.getElementById('cepInput');
+const tErr = document.getElementById('tableError');
+const dErr = document.getElementById('deliveryError');
+const tableBanner = document.getElementById('tableBanner');
+const bannerTableNumber = document.getElementById('bannerTableNumber');
+
+// === LEITURA DE QR CODE: Detecta ?mesa=X ou ?table=X na URL ===
 const urlParams = new URLSearchParams(window.location.search);
-let tableNumber = urlParams.get('mesa') || urlParams.get('table') || prompt("Qual o número da sua mesa?");
+let scannedTable = urlParams.get('mesa') || urlParams.get('table');
+
+// Se encontrou mesa via QR Code, mostra banner e armazena
+if (scannedTable) {
+  bannerTableNumber.textContent = scannedTable;
+  tableBanner.style.display = 'block';
+  // Esconde banner após 6 segundos
+  setTimeout(() => {
+    tableBanner.style.opacity = '0';
+    setTimeout(() => { tableBanner.style.display = 'none'; }, 300);
+  }, 6000);
+}
 
 document.getElementById('finalizeOrderBtn').onclick = () => {
 if (!cart.length) return alert("Carrinho vazio");
